@@ -17,7 +17,7 @@ router.get('/api', (req, res, next) => {
 
 /////
 // Authenticate user's JWT
-router.use('/authUser', user_controller.authenticate_user_token);
+router.use('/authUser', user_controller.verify_user_token);
 
 // Log in user
 router.post('/log-in', user_controller.log_in_user);
