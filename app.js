@@ -8,6 +8,7 @@ const cors = require('cors');
 const helmet = require('helmet');
 const compression = require('compression');
 const mongoose = require('mongoose');
+require('./passport/passport');
 
 const mongoDb = process.env.MONGODB_URI;
 mongoose.connect(mongoDb, { useNewUrlParser: true, useUnifiedTopology: true });
@@ -24,7 +25,7 @@ app.use(logger('dev'));
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 app.use(cookieParser());
-app.use(express.static(path.join(__dirname, 'public')));
+// app.use(express.static(path.join(__dirname, 'public')));
 app.use(compression());
 
 app.use('/', apiRouter);
