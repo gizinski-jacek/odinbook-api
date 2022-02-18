@@ -8,16 +8,12 @@ const comment_controller = require('../controllers/commentController');
 
 // Redirect to all posts.
 router.get('/', (req, res, next) => {
-	res.redirect('/api/posts');
-});
-
-router.get('/api', (req, res, next) => {
-	res.redirect('/api/posts');
+	res.redirect('/posts');
 });
 
 /////
-// Authenticate user's JWT
-router.use('/authUser', user_controller.verify_user_token);
+// Verify user's JWT
+router.use('/verify-token', user_controller.verify_user_token);
 
 // Log in user
 router.post('/log-in', user_controller.log_in_user);
