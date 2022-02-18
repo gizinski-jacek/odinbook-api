@@ -18,7 +18,7 @@ const UserSchema = new Schema({
 });
 
 // Virtual for post's URL
-PostSchema.virtual('url').get(function () {
+UserSchema.virtual('url').get(function () {
 	return '/users/' + this._id;
 });
 
