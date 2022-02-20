@@ -3,6 +3,7 @@ const User = require('../models/user');
 const { body, validationResult } = require('express-validator');
 const jwt = require('jsonwebtoken');
 const passport = require('passport');
+
 const bcryptjs = require('bcryptjs');
 
 exports.sign_up_user = [
@@ -24,6 +25,10 @@ exports.sign_up_user = [
 		.escape(),
 	async (req, res, next) => {
 		try {
+			const user_list = await User.find({ email: req.body.email }).exec();
+			if (user_list.length > 0) {
+				return res.status(409).json('Email is already taken');
+			}
 			const errors = validationResult(req);
 			const newUser = new User({
 				first_name: req.body.first_name,
@@ -31,7 +36,7 @@ exports.sign_up_user = [
 				email: req.body.email,
 			});
 			if (!errors.isEmpty()) {
-				res.status(404).json(errors.array());
+				return res.status(404).json(errors.array());
 			}
 			const hashedPassword = await bcryptjs.hash(req.body.password, 10);
 			newUser.password = hashedPassword;
@@ -41,7 +46,7 @@ exports.sign_up_user = [
 					.status(404)
 					.json('Error creating user, try again in a few minutes');
 			}
-			res.status(200).json({ success: true });
+			return res.status(200).json('User created successfully');
 		} catch (error) {
 			next(error);
 		}
@@ -70,17 +75,24 @@ exports.log_in_user = async (req, res, next) => {
 					secure: false,
 					sameSite: 'strict',
 				});
-				res.status(200).json({ _id: user._id, username: user.username });
+				return res.status(200).json({
+					_id: user._id,
+					email: user.email,
+					first_name: user.first_name,
+					last_name: user.last_name,
+					friendList: user.friendList,
+					friendRequests: user.friendRequests,
+				});
 			} catch (error) {
 				next(error);
 			}
 		}
-	);
+	)(req, res, next);
 };
 
 exports.log_out_user = (req, res, next) => {
 	res.clearCookie('token', { path: '/' });
-	res.status(200).json({ success: true });
+	return res.status(200).json({ success: true });
 };
 
 exports.verify_user_token = async (req, res, next) => {
@@ -90,12 +102,15 @@ exports.verify_user_token = async (req, res, next) => {
 				req.cookies.token,
 				process.env.STRATEGY_SECRET
 			);
-			const user = await User.findById(decodedToken._id, 'username').exec();
+			const user = await User.findById(
+				decodedToken._id,
+				'email first_name last_name friendList friendRequests'
+			).exec();
 			return res.status(200).json(user);
 		}
-		res.status(200).json(null);
+		return res.status(200).json(null);
 	} catch (error) {
 		res.clearCookie('token', { path: '/' });
-		res.status(403).json('Failed to verify user token. Please log in');
+		return res.status(403).json('Failed to verify user token. Please log in');
 	}
 };
