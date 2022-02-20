@@ -13,18 +13,37 @@ router.get('/', (req, res, next) => {
 
 /////
 // Verify user's JWT
-router.use('/verify-token', user_controller.verify_user_token);
+router.get('/verify-token', user_controller.verify_user_token);
 
 // Log in user
 router.post('/log-in', user_controller.log_in_user);
 
 // Log out user
-router.post('/log-out', user_controller.log_out_user);
+router.get('/log-out', user_controller.log_out_user);
 
 // Sign up user
 router.post('/sign-up', user_controller.sign_up_user);
 
 /////
+// Create new post
+router.get('/posts', (req, res, next) => {
+	res.status(200).json({ msg: 'test' });
+});
+
+// Get user's posts
+router.get(
+	'/posts/user-posts',
+	passport.authenticate('jwt', { session: false }),
+	post_controller.get_user_posts
+);
+
+// Get user's friends posts
+router.get(
+	'/posts/user-friends-posts',
+	passport.authenticate('jwt', { session: false }),
+	post_controller.get_user_friends_posts
+);
+
 // Create new post
 router.post('/posts', post_controller.create_post);
 
@@ -43,9 +62,6 @@ router.put('/posts/like/:postid', post_controller.change_like_status);
 /////
 // Create new comment
 router.post('/comments', comment_controller.create_comment);
-
-// Get single comment
-router.get('/comments/:commentid', comment_controller.get_single_comment);
 
 // Update a comment
 router.put('/comments/:commentid', comment_controller.update_comment);
