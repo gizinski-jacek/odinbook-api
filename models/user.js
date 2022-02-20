@@ -13,7 +13,7 @@ const UserSchema = new Schema({
 		required: true,
 	},
 	password: { type: String, minlength: 8, maxlength: 64, required: true },
-	friends: [{ type: Schema.Types.ObjectId, ref: 'User' }],
+	friendList: [{ type: Schema.Types.ObjectId, ref: 'User' }],
 	friendRequests: [{ type: Schema.Types.ObjectId, ref: 'User' }],
 });
 
