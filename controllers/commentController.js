@@ -18,7 +18,6 @@ exports.create_comment = [
 				author: req.user._id,
 				post_ref: req.params.postid,
 				text: req.body.text,
-				likes: [],
 			});
 			if (!errors.isEmpty()) {
 				return res.status(404).json(errors.array());
@@ -29,7 +28,7 @@ exports.create_comment = [
 					.status(404)
 					.json('Error creating comment, try again in a few minutes');
 			}
-			res.status(200).json('Comment created successfully');
+			return res.status(200).json('Comment created successfully');
 		} catch (error) {
 			next(error);
 		}
@@ -41,7 +40,6 @@ exports.update_comment = [
 		.trim()
 		.isLength({ min: 8, max: 512 })
 		.escape(),
-	,
 	async (req, res, next) => {
 		try {
 			if (!mongoose.Types.ObjectId.isValid(req.params.postid)) {
@@ -60,7 +58,6 @@ exports.update_comment = [
 				// post_ref: req.params.postid,
 				post_ref: theComment.post_ref,
 				text: req.body.text,
-				likes: [],
 			});
 			if (!errors.isEmpty()) {
 				return res.status(404).json(errors.array());
@@ -75,7 +72,7 @@ exports.update_comment = [
 					.status(404)
 					.json('Comment not found. Creating new comment instead');
 			}
-			res.status(200).json('Comment updated successfully');
+			return res.status(200).json('Comment updated successfully');
 		} catch (error) {
 			next(error);
 		}
@@ -93,7 +90,7 @@ exports.delete_comment = async (req, res, next) => {
 		if (!comment) {
 			return res.status(404).json('Comment not found, nothing to delete');
 		}
-		res.status(200).json({ success: true });
+		return res.status(200).json({ success: true });
 	} catch (error) {
 		next(error);
 	}
@@ -112,22 +109,22 @@ exports.change_like_status = async (req, res, next) => {
 			const comment = await Comment.findByIdAndUpdate(
 				req.params.commentid,
 				{ $pull: { likes: req.user._id } },
-				{ new: true, timestamps: false }
+				{ timestamps: false }
 			).exec();
 			if (!comment) {
 				return res.status(404).json('Comment not found, nothing to unlike');
 			}
-			res.status(200).json({ success: true });
+			return res.status(200).json({ success: true });
 		} else {
 			const comment = await Comment.findByIdAndUpdate(
 				req.params.commentid,
 				{ $addToSet: { likes: req.user._id } },
-				{ new: true, timestamps: false }
+				{ timestamps: false }
 			).exec();
 			if (!comment) {
 				return res.status(404).json('Comment not found, nothing to like');
 			}
-			res.status(200).json({ success: true });
+			return res.status(200).json({ success: true });
 		}
 	} catch (error) {
 		next(error);
