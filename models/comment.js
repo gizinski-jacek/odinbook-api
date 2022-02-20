@@ -13,7 +13,7 @@ const CommentSchema = new Schema(
 );
 
 // Virtual for post's URL
-PostSchema.virtual('url').get(function () {
+CommentSchema.virtual('url').get(function () {
 	return '/comments/' + this._id;
 });
 
