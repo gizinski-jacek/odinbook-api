@@ -1,5 +1,6 @@
 require('dotenv').config();
 const Post = require('../models/post');
+const User = require('../models/user');
 const { body, validationResult } = require('express-validator');
 const mongoose = require('mongoose');
 
@@ -19,8 +20,6 @@ exports.create_post = [
 				author: req.user._id,
 				title: req.body.title,
 				text: req.body.text,
-				comments: [],
-				likes: [],
 			});
 			if (!errors.isEmpty()) {
 				return res.status(404).json(errors.array());
@@ -31,7 +30,7 @@ exports.create_post = [
 					.status(404)
 					.json('Error creating post, try again in a few minutes');
 			}
-			res.status(200).json('New post created successfully');
+			return res.status(200).json('New post created successfully');
 		} catch (error) {
 			next(error);
 		}
@@ -45,11 +44,45 @@ exports.get_single_post = async (req, res, next) => {
 		}
 		const post = await Post.findById(req.params.postid)
 			.populate('author', 'first_name last_name')
+			.populate('comments')
 			.exec();
 		if (!post) {
 			return res.status(404).json('Post not found');
 		}
-		res.status(200).json(post);
+		return res.status(200).json(post);
+	} catch (error) {
+		next(error);
+	}
+};
+
+exports.get_user_posts = async (req, res, next) => {
+	try {
+		if (!mongoose.Types.ObjectId.isValid(req.user._id)) {
+			return res.status(404).json('Invalid user Id');
+		}
+		const user_posts = await Post.find({ author: req.user._id })
+			.populate('author', 'first_name last_name')
+			.populate('comments')
+			.exec();
+		return res.status(200).json(user_posts);
+	} catch (error) {
+		next(error);
+	}
+};
+
+exports.get_user_friends_posts = async (req, res, next) => {
+	try {
+		if (!mongoose.Types.ObjectId.isValid(req.user._id)) {
+			return res.status(404).json('Invalid user Id');
+		}
+		const user = User.findById(req.user._id).exec();
+		const user_friends_posts = await Post.find({
+			_id: { $in: user.friendList },
+		})
+			.populate('author', 'first_name last_name')
+			.populate('comments')
+			.exec();
+		return res.status(200).json(user_friends_posts);
 	} catch (error) {
 		next(error);
 	}
@@ -78,8 +111,6 @@ exports.update_post = [
 				author: thePost.author,
 				title: req.body.title,
 				text: req.body.text,
-				comments: [],
-				likes: [],
 			});
 			if (!errors.isEmpty()) {
 				return res.status(404).json(errors.array());
@@ -88,13 +119,15 @@ exports.update_post = [
 				req.params.postid,
 				updatedPost,
 				{ upsert: true, timestamps: true }
-			).exec();
+			)
+				.populate('comments')
+				.exec();
 			if (!post) {
 				return res
 					.status(404)
 					.json('Post not found. Creating new post instead');
 			}
-			res.status(200).json('Post updated successfully');
+			return res.status(200).json('Post updated successfully');
 		} catch (error) {
 			next(error);
 		}
@@ -110,7 +143,7 @@ exports.delete_post = async (req, res, next) => {
 		if (!post) {
 			return res.status(404).json('Post not found, nothing to delete');
 		}
-		res.status(200).json({ success: true });
+		return res.status(200).json({ success: true });
 	} catch (error) {
 		next(error);
 	}
@@ -129,22 +162,24 @@ exports.change_like_status = async (req, res, next) => {
 			const post = await Post.findByIdAndUpdate(
 				req.params.postid,
 				{ $pull: { likes: req.user._id } },
-				{ new: true, timestamps: false }
+				{ timestamps: false }
 			).exec();
 			if (!post) {
 				return res.status(404).json('Post not found, nothing to unlike');
 			}
-			res.status(200).json({ success: true });
+			return res.status(200).json({ success: true });
 		} else {
 			const post = await Post.findByIdAndUpdate(
 				req.params.postid,
 				{ $addToSet: { likes: req.user._id } },
-				{ new: true, timestamps: false }
-			).exec();
+				{ timestamps: false }
+			)
+				.populate('comments')
+				.exec();
 			if (!post) {
 				return res.status(404).json('Post not found, nothing to like');
 			}
-			res.status(200).json({ success: true });
+			return res.status(200).json({ success: true });
 		}
 	} catch (error) {
 		next(error);
