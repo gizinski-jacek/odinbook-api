@@ -3,8 +3,8 @@ const User = require('../models/user');
 const { body, validationResult } = require('express-validator');
 const jwt = require('jsonwebtoken');
 const passport = require('passport');
-
 const bcryptjs = require('bcryptjs');
+const mongoose = require('mongoose');
 
 exports.sign_up_user = [
 	body('first_name', 'First name is invalid')
@@ -68,7 +68,7 @@ exports.log_in_user = async (req, res, next) => {
 				const token = jwt.sign(
 					{ _id: user._id, username: user.username },
 					process.env.STRATEGY_SECRET,
-					{ expiresIn: '15m' }
+					{ expiresIn: '150m' }
 				);
 				res.cookie('token', token, {
 					httpOnly: true,
@@ -80,8 +80,6 @@ exports.log_in_user = async (req, res, next) => {
 					email: user.email,
 					first_name: user.first_name,
 					last_name: user.last_name,
-					friendList: user.friendList,
-					friendRequests: user.friendRequests,
 				});
 			} catch (error) {
 				next(error);
@@ -104,7 +102,7 @@ exports.verify_user_token = async (req, res, next) => {
 			);
 			const user = await User.findById(
 				decodedToken._id,
-				'email first_name last_name friendList friendRequests'
+				'email first_name last_name'
 			).exec();
 			return res.status(200).json(user);
 		}
@@ -112,5 +110,116 @@ exports.verify_user_token = async (req, res, next) => {
 	} catch (error) {
 		res.clearCookie('token', { path: '/' });
 		return res.status(403).json('Failed to verify user token. Please log in');
+	}
+};
+
+exports.get_user_friend_list = async (req, res, next) => {
+	try {
+		if (!mongoose.Types.ObjectId.isValid(req.user._id)) {
+			return res.status(404).json('Invalid user Id');
+		}
+		const user = await User.findById(req.user._id).exec();
+		const friend_list = await User.find(
+			{ _id: { $in: user.friendList } },
+			'email first_name last_name'
+		).exec();
+		return res.status(200).json(friend_list);
+	} catch (error) {
+		next(error);
+	}
+};
+
+exports.get_user_friend_requests = async (req, res, next) => {
+	try {
+		if (!mongoose.Types.ObjectId.isValid(req.user._id)) {
+			return res.status(404).json('Invalid user Id');
+		}
+		const user = await User.findById(req.user._id).exec();
+		const friend_requests = await User.find(
+			{ _id: { $in: user.friendRequests } },
+			'email first_name last_name'
+		).exec();
+		return res.status(200).json(friend_requests);
+	} catch (error) {
+		next(error);
+	}
+};
+
+exports.get_user_friends_data = async (req, res, next) => {
+	try {
+		if (!mongoose.Types.ObjectId.isValid(req.user._id)) {
+			return res.status(404).json('Invalid user Id');
+		}
+		const user = await User.findById(req.user._id).exec();
+		const friends_data = await Promise.all([
+			User.find(
+				{ _id: { $in: user.friendList } },
+				'email first_name last_name'
+			).exec(),
+			User.find(
+				{ _id: { $in: user.friendRequests } },
+				'email first_name last_name'
+			).exec(),
+		]);
+		return res.status(200).json(friends_data);
+	} catch (error) {
+		next(error);
+	}
+};
+
+exports.accept_friend_request = async (req, res, next) => {
+	try {
+		if (!mongoose.Types.ObjectId.isValid(req.user._id)) {
+			return res.status(404).json('Invalid user Id');
+		}
+		if (!mongoose.Types.ObjectId.isValid(req.params.requestid)) {
+			return res.status(404).json('Invalid request Id');
+		}
+		const user = await User.findByIdAndUpdate(
+			req.user._id,
+			{
+				$push: { friendList: req.params.requestid },
+				$pull: { friendRequests: req.params.requestid },
+			},
+			{ new: true }
+		).exec();
+		const friends_data = await Promise.all([
+			User.find(
+				{ _id: { $in: user.friendList } },
+				'email first_name last_name'
+			).exec(),
+			User.find(
+				{ _id: { $in: user.friendRequests } },
+				'email first_name last_name'
+			).exec(),
+		]);
+		return res.status(200).json(friends_data);
+	} catch (error) {
+		next(error);
+	}
+};
+
+exports.decline_friend_request = async (req, res, next) => {
+	try {
+		if (!mongoose.Types.ObjectId.isValid(req.user._id)) {
+			return res.status(404).json('Invalid user Id');
+		}
+		if (!mongoose.Types.ObjectId.isValid(req.params.requestid)) {
+			return res.status(404).json('Invalid request Id');
+		}
+		const user = await User.findByIdAndUpdate(
+			req.user._id,
+			{
+				$pull: { friendRequests: req.params.requestid },
+			},
+			{ new: true }
+		).exec();
+		const friendRequests = await User.find(
+			{ _id: { $in: user.friendRequests } },
+			'email first_name last_name'
+		).exec();
+		return res.status(200).json(friendRequests);
+	} catch (error) {
+		next(error);
 	}
 };
