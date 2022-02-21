@@ -28,12 +28,29 @@ exports.create_comment = [
 					.status(404)
 					.json('Error creating comment, try again in a few minutes');
 			}
-			return res.status(200).json('Comment created successfully');
+			const comment_list = await Comment.find({
+				post_ref: req.params.postid,
+			}).exec();
+			return res.status(200).json(comment_list);
 		} catch (error) {
 			next(error);
 		}
 	},
 ];
+
+exports.get_post_comments = async (req, res, next) => {
+	try {
+		if (!mongoose.Types.ObjectId.isValid(req.params.postid)) {
+			return res.status(404).json('Invalid post Id');
+		}
+		const comment_list = await Comment.find({
+			post_ref: req.params.postid,
+		}).exec();
+		return res.status(200).json(comment_list);
+	} catch (error) {
+		next(error);
+	}
+};
 
 exports.update_comment = [
 	body('text', 'Text is invalid')
