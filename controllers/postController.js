@@ -5,10 +5,6 @@ const { body, validationResult } = require('express-validator');
 const mongoose = require('mongoose');
 
 exports.create_post = [
-	body('title', 'Title is invalid')
-		.trim()
-		.isLength({ min: 4, max: 32 })
-		.escape(),
 	body('text', 'Text is invalid')
 		.trim()
 		.isLength({ min: 4, max: 512 })
@@ -18,8 +14,9 @@ exports.create_post = [
 			const errors = validationResult(req);
 			const newPost = new Post({
 				author: req.user._id,
-				title: req.body.title,
 				text: req.body.text,
+				comments: [],
+				likes: [],
 			});
 			if (!errors.isEmpty()) {
 				return res.status(404).json(errors.array());
@@ -75,14 +72,39 @@ exports.get_user_friends_posts = async (req, res, next) => {
 		if (!mongoose.Types.ObjectId.isValid(req.user._id)) {
 			return res.status(404).json('Invalid user Id');
 		}
-		const user = User.findById(req.user._id).exec();
+		const user = await User.findById(req.user._id).exec();
 		const user_friends_posts = await Post.find({
-			_id: { $in: user.friendList },
+			author: { $in: user.friendList },
 		})
 			.populate('author', 'first_name last_name')
 			.populate('comments')
 			.exec();
 		return res.status(200).json(user_friends_posts);
+	} catch (error) {
+		next(error);
+	}
+};
+
+exports.get_user_timeline_posts = async (req, res, next) => {
+	try {
+		if (!mongoose.Types.ObjectId.isValid(req.user._id)) {
+			return res.status(404).json('Invalid user Id');
+		}
+		const user = await User.findById(req.user._id).exec();
+		const res_timeline_posts = await Promise.all([
+			Post.find({ author: req.user._id })
+				.populate('author', 'first_name last_name')
+				.populate('comments')
+				.exec(),
+			Post.find({
+				author: { $in: user.friendList },
+			})
+				.populate('author', 'first_name last_name')
+				.populate('comments')
+				.exec(),
+		]);
+		const timeline_posts = res_timeline_posts[0].concat(res_timeline_posts[1]);
+		return res.status(200).json(timeline_posts);
 	} catch (error) {
 		next(error);
 	}
