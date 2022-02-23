@@ -13,8 +13,8 @@ const UserSchema = new Schema({
 		required: true,
 	},
 	password: { type: String, minlength: 8, maxlength: 64, required: true },
-	friendList: [{ type: Schema.Types.ObjectId, ref: 'User' }],
-	friendRequests: [{ type: Schema.Types.ObjectId, ref: 'User' }],
+	friend_list: [{ type: Schema.Types.ObjectId, ref: 'User' }],
+	friend_requests: [{ type: Schema.Types.ObjectId, ref: 'User' }],
 });
 
 // Virtual for post's URL
