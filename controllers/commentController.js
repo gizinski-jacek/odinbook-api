@@ -18,6 +18,7 @@ exports.create_comment = [
 				author: req.user._id,
 				post_ref: req.params.postid,
 				text: req.body.text,
+				likes: [],
 			});
 			if (!errors.isEmpty()) {
 				return res.status(404).json(errors.array());
@@ -30,7 +31,9 @@ exports.create_comment = [
 			}
 			const comment_list = await Comment.find({
 				post_ref: req.params.postid,
-			}).exec();
+			})
+				.sort({ createdAt: 'desc' })
+				.exec();
 			return res.status(200).json(comment_list);
 		} catch (error) {
 			next(error);
@@ -45,7 +48,9 @@ exports.get_post_comments = async (req, res, next) => {
 		}
 		const comment_list = await Comment.find({
 			post_ref: req.params.postid,
-		}).exec();
+		})
+			.sort({ createdAt: 'desc' })
+			.exec();
 		return res.status(200).json(comment_list);
 	} catch (error) {
 		next(error);
@@ -68,13 +73,11 @@ exports.update_comment = [
 			const theComment = await Comment.findById(req.params.commentid).exec();
 			const errors = validationResult(req);
 			const updatedComment = new Comment({
-				// _id: req.params.commentid,
 				_id: theComment._id,
-				// author: req.user._id,
 				author: theComment.author,
-				// post_ref: req.params.postid,
 				post_ref: theComment.post_ref,
 				text: req.body.text,
+				likes: theComment.likes,
 			});
 			if (!errors.isEmpty()) {
 				return res.status(404).json(errors.array());
@@ -82,14 +85,17 @@ exports.update_comment = [
 			const comment = await Comment.findByIdAndUpdate(
 				req.params.commentid,
 				updatedComment,
-				{ upsert: true, timestamps: true }
+				{ timestamps: true }
 			);
 			if (!comment) {
-				return res
-					.status(404)
-					.json('Comment not found. Creating new comment instead');
+				return res.status(404).json('Comment not found. Nothing to update');
 			}
-			return res.status(200).json('Comment updated successfully');
+			const comment_list = await Comment.find({
+				post_ref: req.params.postid,
+			})
+				.sort({ createdAt: 'desc' })
+				.exec();
+			return res.status(200).json(comment_list);
 		} catch (error) {
 			next(error);
 		}
@@ -98,6 +104,9 @@ exports.update_comment = [
 
 exports.delete_comment = async (req, res, next) => {
 	try {
+		if (!mongoose.Types.ObjectId.isValid(req.params.postid)) {
+			return res.status(404).json('Invalid post Id');
+		}
 		if (!mongoose.Types.ObjectId.isValid(req.params.commentid)) {
 			return res.status(404).json('Invalid comment Id');
 		}
@@ -107,7 +116,12 @@ exports.delete_comment = async (req, res, next) => {
 		if (!comment) {
 			return res.status(404).json('Comment not found, nothing to delete');
 		}
-		return res.status(200).json({ success: true });
+		const comment_list = await Comment.find({
+			post_ref: req.params.postid,
+		})
+			.sort({ createdAt: 'desc' })
+			.exec();
+		return res.status(200).json(comment_list);
 	} catch (error) {
 		next(error);
 	}
@@ -115,6 +129,9 @@ exports.delete_comment = async (req, res, next) => {
 
 exports.change_like_status = async (req, res, next) => {
 	try {
+		if (!mongoose.Types.ObjectId.isValid(req.params.postid)) {
+			return res.status(404).json('Invalid post Id');
+		}
 		if (!mongoose.Types.ObjectId.isValid(req.params.commentid)) {
 			return res.status(404).json('Invalid comment Id');
 		}
@@ -131,7 +148,12 @@ exports.change_like_status = async (req, res, next) => {
 			if (!comment) {
 				return res.status(404).json('Comment not found, nothing to unlike');
 			}
-			return res.status(200).json({ success: true });
+			const comment_list = await Comment.find({
+				post_ref: req.params.postid,
+			})
+				.sort({ createdAt: 'desc' })
+				.exec();
+			return res.status(200).json(comment_list);
 		} else {
 			const comment = await Comment.findByIdAndUpdate(
 				req.params.commentid,
@@ -141,7 +163,12 @@ exports.change_like_status = async (req, res, next) => {
 			if (!comment) {
 				return res.status(404).json('Comment not found, nothing to like');
 			}
-			return res.status(200).json({ success: true });
+			const comment_list = await Comment.find({
+				post_ref: req.params.postid,
+			})
+				.sort({ createdAt: 'desc' })
+				.exec();
+			return res.status(200).json(comment_list);
 		}
 	} catch (error) {
 		next(error);
