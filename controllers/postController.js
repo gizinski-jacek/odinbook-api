@@ -6,7 +6,7 @@ const mongoose = require('mongoose');
 exports.create_post = [
 	body('text', 'Text is invalid')
 		.trim()
-		.isLength({ min: 4, max: 512 })
+		.isLength({ min: 1, max: 512 })
 		.escape(),
 	async (req, res, next) => {
 		try {
@@ -116,7 +116,7 @@ exports.get_user_timeline_posts = async (req, res, next) => {
 exports.update_post = [
 	body('text', 'Text is invalid')
 		.trim()
-		.isLength({ min: 4, max: 512 })
+		.isLength({ min: 1, max: 512 })
 		.escape(),
 	async (req, res, next) => {
 		try {
