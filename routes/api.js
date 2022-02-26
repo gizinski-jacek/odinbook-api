@@ -147,7 +147,7 @@ router.delete(
 
 // Like a comment
 router.put(
-	'/posts/:postid/comments/like/:commentid',
+	'/posts/:postid/comments/:commentid/like',
 	passport.authenticate('jwt', { session: false }),
 	comment_controller.change_like_status
 );
