@@ -50,6 +50,7 @@ exports.get_post_comments = async (req, res, next) => {
 			post_ref: req.params.postid,
 		})
 			.sort({ createdAt: 'desc' })
+			.populate('author', 'first_name last_name')
 			.exec();
 		return res.status(200).json(comment_list);
 	} catch (error) {
@@ -94,6 +95,7 @@ exports.update_comment = [
 				post_ref: req.params.postid,
 			})
 				.sort({ createdAt: 'desc' })
+				.populate('author', 'first_name last_name')
 				.exec();
 			return res.status(200).json(comment_list);
 		} catch (error) {
@@ -120,6 +122,7 @@ exports.delete_comment = async (req, res, next) => {
 			post_ref: req.params.postid,
 		})
 			.sort({ createdAt: 'desc' })
+			.populate('author', 'first_name last_name')
 			.exec();
 		return res.status(200).json(comment_list);
 	} catch (error) {
@@ -152,6 +155,7 @@ exports.change_like_status = async (req, res, next) => {
 				post_ref: req.params.postid,
 			})
 				.sort({ createdAt: 'desc' })
+				.populate('author', 'first_name last_name')
 				.exec();
 			return res.status(200).json(comment_list);
 		} else {
@@ -167,6 +171,7 @@ exports.change_like_status = async (req, res, next) => {
 				post_ref: req.params.postid,
 			})
 				.sort({ createdAt: 'desc' })
+				.populate('author', 'first_name last_name')
 				.exec();
 			return res.status(200).json(comment_list);
 		}
