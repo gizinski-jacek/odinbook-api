@@ -32,7 +32,7 @@ exports.create_comment = [
 			const comment_list = await Comment.find({
 				post_ref: req.params.postid,
 			})
-				.sort({ createdAt: 'desc' })
+				.sort({ createdAt: 'asc' })
 				.exec();
 			return res.status(200).json(comment_list);
 		} catch (error) {
@@ -49,7 +49,7 @@ exports.get_post_comments = async (req, res, next) => {
 		const comment_list = await Comment.find({
 			post_ref: req.params.postid,
 		})
-			.sort({ createdAt: 'desc' })
+			.sort({ createdAt: 'asc' })
 			.populate('author', 'first_name last_name')
 			.exec();
 		return res.status(200).json(comment_list);
@@ -71,6 +71,7 @@ exports.update_comment = [
 			if (!mongoose.Types.ObjectId.isValid(req.params.commentid)) {
 				return res.status(404).json('Invalid comment Id');
 			}
+			console.log(123);
 			const theComment = await Comment.findById(req.params.commentid).exec();
 			const errors = validationResult(req);
 			const updatedComment = new Comment({
@@ -94,7 +95,7 @@ exports.update_comment = [
 			const comment_list = await Comment.find({
 				post_ref: req.params.postid,
 			})
-				.sort({ createdAt: 'desc' })
+				.sort({ createdAt: 'asc' })
 				.populate('author', 'first_name last_name')
 				.exec();
 			return res.status(200).json(comment_list);
@@ -121,7 +122,7 @@ exports.delete_comment = async (req, res, next) => {
 		const comment_list = await Comment.find({
 			post_ref: req.params.postid,
 		})
-			.sort({ createdAt: 'desc' })
+			.sort({ createdAt: 'asc' })
 			.populate('author', 'first_name last_name')
 			.exec();
 		return res.status(200).json(comment_list);
@@ -154,7 +155,7 @@ exports.change_like_status = async (req, res, next) => {
 			const comment_list = await Comment.find({
 				post_ref: req.params.postid,
 			})
-				.sort({ createdAt: 'desc' })
+				.sort({ createdAt: 'asc' })
 				.populate('author', 'first_name last_name')
 				.exec();
 			return res.status(200).json(comment_list);
@@ -170,7 +171,7 @@ exports.change_like_status = async (req, res, next) => {
 			const comment_list = await Comment.find({
 				post_ref: req.params.postid,
 			})
-				.sort({ createdAt: 'desc' })
+				.sort({ createdAt: 'asc' })
 				.populate('author', 'first_name last_name')
 				.exec();
 			return res.status(200).json(comment_list);
