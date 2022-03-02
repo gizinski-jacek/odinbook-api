@@ -18,7 +18,6 @@ exports.create_comment = [
 				author: req.user._id,
 				post_ref: req.params.postid,
 				text: req.body.text,
-				likes: [],
 			});
 			if (!errors.isEmpty()) {
 				return res.status(404).json(errors.array());
@@ -71,7 +70,6 @@ exports.update_comment = [
 			if (!mongoose.Types.ObjectId.isValid(req.params.commentid)) {
 				return res.status(404).json('Invalid comment Id');
 			}
-			console.log(123);
 			const theComment = await Comment.findById(req.params.commentid).exec();
 			const errors = validationResult(req);
 			const updatedComment = new Comment({
