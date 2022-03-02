@@ -14,7 +14,9 @@ const UserSchema = new Schema({
 	},
 	password: { type: String, minlength: 8, maxlength: 64, required: true },
 	friend_list: [{ type: Schema.Types.ObjectId, ref: 'User' }],
-	friend_requests: [{ type: Schema.Types.ObjectId, ref: 'User' }],
+	blocked_user_list: [{ type: Schema.Types.ObjectId, ref: 'User' }],
+	incoming_friend_requests: [{ type: Schema.Types.ObjectId, ref: 'User' }],
+	outgoing_friend_requests: [{ type: Schema.Types.ObjectId, ref: 'User' }],
 });
 
 // Virtual for post's URL
