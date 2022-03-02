@@ -1,5 +1,6 @@
 require('dotenv').config();
 const Post = require('../models/post');
+const User = require('../models/user');
 const { body, validationResult } = require('express-validator');
 const mongoose = require('mongoose');
 
@@ -10,15 +11,10 @@ exports.create_post = [
 		.escape(),
 	async (req, res, next) => {
 		try {
-			if (!mongoose.Types.ObjectId.isValid(req.user._id)) {
-				return res.status(404).json('Invalid user Id');
-			}
 			const errors = validationResult(req);
 			const newPost = new Post({
 				author: req.user._id,
 				text: req.body.text,
-				comments: [],
-				likes: [],
 			});
 			if (!errors.isEmpty()) {
 				return res.status(404).json(errors.array());
@@ -29,8 +25,9 @@ exports.create_post = [
 					.status(404)
 					.json('Error creating post, try again in a few minutes');
 			}
+			const user = await User.findById(req.user._id).exec();
 			const timeline_post_list = await Post.find({
-				author: { $in: [req.user._id, ...req.user.friend_list] },
+				author: { $in: [req.user._id, ...user.friend_list] },
 			})
 				.sort({ createdAt: 'desc' })
 				.populate('author', 'first_name last_name')
@@ -63,9 +60,6 @@ exports.get_single_post = async (req, res, next) => {
 
 exports.get_user_posts = async (req, res, next) => {
 	try {
-		if (!mongoose.Types.ObjectId.isValid(req.user._id)) {
-			return res.status(404).json('Invalid user Id');
-		}
 		const user_posts = await Post.find({ author: req.user._id })
 			.sort({ createdAt: 'desc' })
 			.populate('author', 'first_name last_name')
@@ -79,11 +73,9 @@ exports.get_user_posts = async (req, res, next) => {
 
 exports.get_user_friends_posts = async (req, res, next) => {
 	try {
-		if (!mongoose.Types.ObjectId.isValid(req.user._id)) {
-			return res.status(404).json('Invalid user Id');
-		}
+		const user = await User.findById(req.user._id).exec();
 		const user_friends_posts = await Post.find({
-			author: { $in: req.user.friend_list },
+			author: { $in: user.friend_list },
 		})
 			.sort({ createdAt: 'desc' })
 			.populate('author', 'first_name last_name')
@@ -97,11 +89,9 @@ exports.get_user_friends_posts = async (req, res, next) => {
 
 exports.get_user_timeline_posts = async (req, res, next) => {
 	try {
-		if (!mongoose.Types.ObjectId.isValid(req.user._id)) {
-			return res.status(404).json('Invalid user Id');
-		}
+		const user = await User.findById(req.user._id).exec();
 		const timeline_post_list = await Post.find({
-			author: { $in: [req.user._id, ...req.user.friend_list] },
+			author: { $in: [req.user._id, ...user.friend_list] },
 		})
 			.sort({ createdAt: 'desc' })
 			.populate('author', 'first_name last_name')
@@ -120,9 +110,6 @@ exports.update_post = [
 		.escape(),
 	async (req, res, next) => {
 		try {
-			if (!mongoose.Types.ObjectId.isValid(req.user._id)) {
-				return res.status(404).json('Invalid user Id');
-			}
 			if (!mongoose.Types.ObjectId.isValid(req.params.postid)) {
 				return res.status(404).json('Invalid post Id');
 			}
@@ -148,8 +135,9 @@ exports.update_post = [
 			if (!post) {
 				return res.status(404).json('Post not found. Nothing to update');
 			}
+			const user = await User.findById(req.user._id).exec();
 			const timeline_post_list = await Post.find({
-				author: { $in: [req.user._id, ...req.user.friend_list] },
+				author: { $in: [req.user._id, ...user.friend_list] },
 			})
 				.sort({ createdAt: 'desc' })
 				.populate('author', 'first_name last_name')
@@ -171,8 +159,9 @@ exports.delete_post = async (req, res, next) => {
 		if (!post) {
 			return res.status(404).json('Post not found, nothing to delete');
 		}
+		const user = await User.findById(req.user._id).exec();
 		const timeline_post_list = await Post.find({
-			author: { $in: [req.user._id, ...req.user.friend_list] },
+			author: { $in: [req.user._id, ...user.friend_list] },
 		})
 			.sort({ createdAt: 'desc' })
 			.populate('author', 'first_name last_name')
@@ -202,8 +191,9 @@ exports.change_like_status = async (req, res, next) => {
 			if (!post) {
 				return res.status(404).json('Post not found, nothing to unlike');
 			}
+			const user = await User.findById(req.user._id).exec();
 			const timeline_post_list = await Post.find({
-				author: { $in: [req.user._id, ...req.user.friend_list] },
+				author: { $in: [req.user._id, ...user.friend_list] },
 			})
 				.sort({ createdAt: 'desc' })
 				.populate('author', 'first_name last_name')
@@ -221,8 +211,9 @@ exports.change_like_status = async (req, res, next) => {
 			if (!post) {
 				return res.status(404).json('Post not found, nothing to like');
 			}
+			const user = await User.findById(req.user._id).exec();
 			const timeline_post_list = await Post.find({
-				author: { $in: [req.user._id, ...req.user.friend_list] },
+				author: { $in: [req.user._id, ...user.friend_list] },
 			})
 				.sort({ createdAt: 'desc' })
 				.populate('author', 'first_name last_name')
