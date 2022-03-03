@@ -116,7 +116,11 @@ exports.get_not_friend_user_list = async (req, res, next) => {
 	try {
 		const user = await User.findById(req.user._id).exec();
 		const user_list = await User.find(
-			{ _id: { $nin: [user._id, ...user.friend_list] } },
+			{
+				_id: {
+					$nin: [user._id, ...user.friend_list, ...user.blocked_user_list],
+				},
+			},
 			'email first_name last_name'
 		).exec();
 		return res.status(200).json(user_list);
@@ -147,7 +151,15 @@ exports.send_request = async (req, res, next) => {
 			).exec(),
 		]);
 		const friend_list = await User.find(
-			{ _id: { $nin: [users_data[0]._id, ...users_data[0].friend_list] } },
+			{
+				_id: {
+					$nin: [
+						users_data[0]._id,
+						...users_data[0].friend_list,
+						...users_data[0].blocked_user_list,
+					],
+				},
+			},
 			'email first_name last_name'
 		).exec();
 		return res.status(200).json(friend_list);
