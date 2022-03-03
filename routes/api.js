@@ -43,6 +43,9 @@ router.get('/users', user_controller.get_not_friend_user_list);
 // Send friend request
 router.put('/users/:userid/send-request', user_controller.send_request);
 
+// Block user
+router.put('/users/:userid/block', user_controller.block_user);
+
 // Get user's friend list
 router.get('/users/user-friend-list', user_controller.get_user_friend_list);
 
