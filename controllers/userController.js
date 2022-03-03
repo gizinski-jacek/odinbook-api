@@ -134,6 +134,14 @@ exports.send_request = async (req, res, next) => {
 		if (!mongoose.Types.ObjectId.isValid(req.params.userid)) {
 			return res.status(404).json('Invalid user Id');
 		}
+		const user = await User.findById(req.user._id).exec();
+		if (user.blocked_user_list.includes(res.params.userid)) {
+			return res
+				.status(200)
+				.json({
+					msg: 'This user has blocked you. Can not send friend request',
+				});
+		}
 		const users_data = await Promise.all([
 			User.findByIdAndUpdate(
 				req.user._id,
@@ -163,6 +171,20 @@ exports.send_request = async (req, res, next) => {
 			'email first_name last_name'
 		).exec();
 		return res.status(200).json(friend_list);
+	} catch (error) {
+		next(error);
+	}
+};
+
+exports.block_user = async (req, res, next) => {
+	try {
+		if (!mongoose.Types.ObjectId.isValid(req.params.userid)) {
+			return res.status(404).json('Invalid user Id');
+		}
+		const user = await User.findByIdAndUpdate(req.user._id, {
+			$addToSet: { blocked_user_list: req.params.userid },
+		});
+		return res.status(200).json({ success: true });
 	} catch (error) {
 		next(error);
 	}
