@@ -135,12 +135,10 @@ exports.send_request = async (req, res, next) => {
 			return res.status(404).json('Invalid user Id');
 		}
 		const user = await User.findById(req.user._id).exec();
-		if (user.blocked_user_list.includes(res.params.userid)) {
-			return res
-				.status(200)
-				.json({
-					msg: 'This user has blocked you. Can not send friend request',
-				});
+		if (user.blocked_user_list.includes(req.params.userid)) {
+			return res.status(200).json({
+				msg: 'This user has blocked you. Unable to send friend request',
+			});
 		}
 		const users_data = await Promise.all([
 			User.findByIdAndUpdate(
@@ -158,19 +156,19 @@ exports.send_request = async (req, res, next) => {
 				{ new: true }
 			).exec(),
 		]);
-		const friend_list = await User.find(
-			{
-				_id: {
-					$nin: [
-						users_data[0]._id,
-						...users_data[0].friend_list,
-						...users_data[0].blocked_user_list,
-					],
-				},
-			},
-			'email first_name last_name'
-		).exec();
-		return res.status(200).json(friend_list);
+		// const user_list = await User.find(
+		// 	{
+		// 		_id: {
+		// 			$nin: [
+		// 				users_data[0]._id,
+		// 				...users_data[0].friend_list,
+		// 				...users_data[0].blocked_user_list,
+		// 			],
+		// 		},
+		// 	},
+		// 	'email first_name last_name'
+		// ).exec();
+		return res.status(200).json({ success: true });
 	} catch (error) {
 		next(error);
 	}
