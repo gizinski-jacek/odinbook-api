@@ -32,6 +32,7 @@ exports.create_comment = [
 				post_ref: req.params.postid,
 			})
 				.sort({ createdAt: 'asc' })
+				.populate('author', 'first_name last_name')
 				.exec();
 			return res.status(200).json(comment_list);
 		} catch (error) {
