@@ -40,11 +40,8 @@ router.use(
 // Get list of people not befriended by user
 router.get('/users', user_controller.get_not_friend_user_list);
 
-// Send friend request
-router.put('/users/:userid/send-request', user_controller.send_request);
-
 // Block user
-router.put('/users/:userid/block', user_controller.block_user);
+router.put('/users/block', user_controller.block_user);
 
 // Get user's friend list
 router.get('/users/user-friend-list', user_controller.get_user_friend_list);
@@ -58,17 +55,14 @@ router.get(
 // Get user's friend list and friend requests
 router.get('/users/user-friends-data', user_controller.get_user_friends_data);
 
+// Send friend request
+router.put('/users/friends/request', user_controller.send_friend_request);
+
 // Update user's friend list after accepting
-router.put(
-	'/users/accept-request/:requestid',
-	user_controller.accept_friend_request
-);
+router.put('/users/friends/accept', user_controller.accept_friend_request);
 
 // Update user's friend requests after declining
-router.put(
-	'/users/decline-request/:requestid',
-	user_controller.decline_friend_request
-);
+router.put('/users/friends/decline', user_controller.decline_friend_request);
 
 /////
 // Get user's posts
@@ -96,7 +90,7 @@ router.put('/posts/:postid', post_controller.update_post);
 router.delete('/posts/:postid', post_controller.delete_post);
 
 // Like a post
-router.put('/posts/like/:postid', post_controller.change_like_status);
+router.put('/posts/:postid/like', post_controller.change_like_status);
 
 /////
 // Create new comment
