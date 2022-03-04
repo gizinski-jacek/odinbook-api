@@ -108,7 +108,9 @@ exports.verify_user_token = async (req, res, next) => {
 		return res.status(200).json(null);
 	} catch (error) {
 		res.clearCookie('token', { path: '/' });
-		return res.status(403).json('Failed to verify user token. Please log in');
+		return res
+			.status(403)
+			.json('Failed to verify user token. Please log in again');
 	}
 };
 
@@ -129,13 +131,13 @@ exports.get_not_friend_user_list = async (req, res, next) => {
 	}
 };
 
-exports.send_request = async (req, res, next) => {
+exports.send_friend_request = async (req, res, next) => {
 	try {
-		if (!mongoose.Types.ObjectId.isValid(req.params.userid)) {
+		if (!mongoose.Types.ObjectId.isValid(req.body.userId)) {
 			return res.status(404).json('Invalid user Id');
 		}
 		const user = await User.findById(req.user._id).exec();
-		if (user.blocked_user_list.includes(req.params.userid)) {
+		if (user.blocked_user_list.includes(req.body.userId)) {
 			return res.status(200).json({
 				msg: 'This user has blocked you. Unable to send friend request',
 			});
@@ -144,12 +146,12 @@ exports.send_request = async (req, res, next) => {
 			User.findByIdAndUpdate(
 				req.user._id,
 				{
-					$addToSet: { outgoing_friend_requests: req.params.userid },
+					$addToSet: { outgoing_friend_requests: req.body.userId },
 				},
 				{ new: true }
 			).exec(),
 			User.findByIdAndUpdate(
-				req.params.userid,
+				req.body.userId,
 				{
 					$addToSet: { incoming_friend_requests: req.user._id },
 				},
@@ -176,11 +178,11 @@ exports.send_request = async (req, res, next) => {
 
 exports.block_user = async (req, res, next) => {
 	try {
-		if (!mongoose.Types.ObjectId.isValid(req.params.userid)) {
+		if (!mongoose.Types.ObjectId.isValid(req.body.userId)) {
 			return res.status(404).json('Invalid user Id');
 		}
 		const user = await User.findByIdAndUpdate(req.user._id, {
-			$addToSet: { blocked_user_list: req.params.userid },
+			$addToSet: { blocked_user_list: req.body.userId },
 		});
 		return res.status(200).json({ success: true });
 	} catch (error) {
@@ -235,20 +237,20 @@ exports.get_user_friends_data = async (req, res, next) => {
 
 exports.accept_friend_request = async (req, res, next) => {
 	try {
-		if (!mongoose.Types.ObjectId.isValid(req.params.requestid)) {
+		if (!mongoose.Types.ObjectId.isValid(req.body.requestId)) {
 			return res.status(404).json('Invalid request Id');
 		}
 		const users_data = await Promise.all([
 			await User.findByIdAndUpdate(
 				req.user._id,
 				{
-					$addToSet: { friend_list: req.params.requestid },
-					$pull: { incoming_friend_requests: req.params.requestid },
+					$addToSet: { friend_list: req.body.requestId },
+					$pull: { incoming_friend_requests: req.body.requestId },
 				},
 				{ new: true }
 			).exec(),
 			User.findByIdAndUpdate(
-				req.params.requestid,
+				req.body.requestId,
 				{
 					$addToSet: { friend_list: req.user._id },
 					$pull: { outgoing_friend_requests: req.user._id },
@@ -274,19 +276,19 @@ exports.accept_friend_request = async (req, res, next) => {
 
 exports.decline_friend_request = async (req, res, next) => {
 	try {
-		if (!mongoose.Types.ObjectId.isValid(req.params.requestid)) {
+		if (!mongoose.Types.ObjectId.isValid(req.body.requestId)) {
 			return res.status(404).json('Invalid request Id');
 		}
 		const users_data = await Promise.all([
 			User.findByIdAndUpdate(
 				req.user._id,
 				{
-					$pull: { incoming_friend_requests: req.params.requestid },
+					$pull: { incoming_friend_requests: req.body.requestId },
 				},
 				{ new: true }
 			).exec(),
 			User.findByIdAndUpdate(
-				req.params.requestid,
+				req.body.requestId,
 				{
 					$pull: { outgoing_friend_requests: req.user._id },
 				},
