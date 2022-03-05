@@ -12,9 +12,4 @@ const CommentSchema = new Schema(
 	{ timestamps: true }
 );
 
-// Virtual for post's URL
-CommentSchema.virtual('url').get(function () {
-	return '/comments/' + this._id;
-});
-
 module.exports = mongoose.model('Comment', CommentSchema);

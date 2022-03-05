@@ -12,9 +12,4 @@ const PostSchema = new Schema(
 	{ timestamps: true }
 );
 
-// Virtual for post's URL
-PostSchema.virtual('url').get(function () {
-	return '/posts/' + this._id;
-});
-
 module.exports = mongoose.model('Post', PostSchema);
