@@ -64,6 +64,9 @@ router.put('/users/friends/accept', user_controller.accept_friend_request);
 // Update user's friend requests after declining
 router.put('/users/friends/decline', user_controller.decline_friend_request);
 
+// Get single user's data
+router.get('/users/:userid', user_controller.get_single_user);
+
 /////
 // Get user's posts
 router.get('/posts/user-posts', post_controller.get_user_posts);
