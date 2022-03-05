@@ -114,6 +114,21 @@ exports.verify_user_token = async (req, res, next) => {
 	}
 };
 
+exports.get_single_user = async (req, res, next) => {
+	try {
+		if (!mongoose.Types.ObjectId.isValid(req.params.userid)) {
+			return res.status(404).json('Invalid user Id');
+		}
+		const user = await User.findById(
+			req.params.userid,
+			'email first_name last_name'
+		).exec();
+		return res.status(200).json(user);
+	} catch (error) {
+		next(error);
+	}
+};
+
 exports.get_not_friend_user_list = async (req, res, next) => {
 	try {
 		const user = await User.findById(req.user._id).exec();
