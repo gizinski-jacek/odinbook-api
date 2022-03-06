@@ -40,6 +40,22 @@ exports.create_post = [
 	},
 ];
 
+exports.get_user_post_list = async (req, res, next) => {
+	try {
+		if (!mongoose.Types.ObjectId.isValid(req.params.userid)) {
+			return res.status(404).json('Invalid post Id');
+		}
+		const post_list = await Post.find({ author: req.params.userid })
+			.sort({ createdAt: 'desc' })
+			.populate('author', 'first_name last_name')
+			.populate('comments')
+			.exec();
+		return res.status(200).json(post_list);
+	} catch (error) {
+		next(error);
+	}
+};
+
 exports.get_single_post = async (req, res, next) => {
 	try {
 		if (!mongoose.Types.ObjectId.isValid(req.params.postid)) {
@@ -58,34 +74,34 @@ exports.get_single_post = async (req, res, next) => {
 	}
 };
 
-exports.get_user_posts = async (req, res, next) => {
-	try {
-		const user_posts = await Post.find({ author: req.user._id })
-			.sort({ createdAt: 'desc' })
-			.populate('author', 'first_name last_name')
-			.populate('comments')
-			.exec();
-		return res.status(200).json(user_posts);
-	} catch (error) {
-		next(error);
-	}
-};
+// exports.get_user_posts = async (req, res, next) => {
+// 	try {
+// 		const user_posts = await Post.find({ author: req.user._id })
+// 			.sort({ createdAt: 'desc' })
+// 			.populate('author', 'first_name last_name')
+// 			.populate('comments')
+// 			.exec();
+// 		return res.status(200).json(user_posts);
+// 	} catch (error) {
+// 		next(error);
+// 	}
+// };
 
-exports.get_user_friends_posts = async (req, res, next) => {
-	try {
-		const user = await User.findById(req.user._id).exec();
-		const user_friends_posts = await Post.find({
-			author: { $in: user.friend_list },
-		})
-			.sort({ createdAt: 'desc' })
-			.populate('author', 'first_name last_name')
-			.populate('comments')
-			.exec();
-		return res.status(200).json(user_friends_posts);
-	} catch (error) {
-		next(error);
-	}
-};
+// exports.get_user_friends_posts = async (req, res, next) => {
+// 	try {
+// 		const user = await User.findById(req.user._id).exec();
+// 		const user_friends_posts = await Post.find({
+// 			author: { $in: user.friend_list },
+// 		})
+// 			.sort({ createdAt: 'desc' })
+// 			.populate('author', 'first_name last_name')
+// 			.populate('comments')
+// 			.exec();
+// 		return res.status(200).json(user_friends_posts);
+// 	} catch (error) {
+// 		next(error);
+// 	}
+// };
 
 exports.get_user_timeline_posts = async (req, res, next) => {
 	try {
