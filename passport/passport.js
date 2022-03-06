@@ -47,8 +47,6 @@ passport.use(
 		},
 		(jwtPayload, done) => {
 			try {
-				console.log(123);
-
 				if (jwtPayload) {
 					done(null, jwtPayload);
 				} else {
