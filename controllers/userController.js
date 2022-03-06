@@ -1,5 +1,6 @@
 require('dotenv').config();
 const User = require('../models/user');
+const Post = require('../models/post');
 const { body, validationResult } = require('express-validator');
 const jwt = require('jsonwebtoken');
 const passport = require('passport');
@@ -99,10 +100,7 @@ exports.verify_user_token = async (req, res, next) => {
 				req.cookies.token,
 				process.env.STRATEGY_SECRET
 			);
-			const user = await User.findById(
-				decodedToken._id,
-				'email first_name last_name'
-			).exec();
+			const user = await User.findById(decodedToken._id).exec();
 			return res.status(200).json(user);
 		}
 		return res.status(200).json(null);
@@ -119,27 +117,21 @@ exports.get_single_user = async (req, res, next) => {
 		if (!mongoose.Types.ObjectId.isValid(req.params.userid)) {
 			return res.status(404).json('Invalid user Id');
 		}
-		const user = await User.findById(
-			req.params.userid,
-			'email first_name last_name'
-		).exec();
+		const user = await User.findById(req.params.userid).exec();
 		return res.status(200).json(user);
 	} catch (error) {
 		next(error);
 	}
 };
 
-exports.get_not_friend_user_list = async (req, res, next) => {
+exports.get_people_list = async (req, res, next) => {
 	try {
 		const user = await User.findById(req.user._id).exec();
-		const user_list = await User.find(
-			{
-				_id: {
-					$nin: [user._id, ...user.friend_list, ...user.blocked_user_list],
-				},
+		const user_list = await User.find({
+			_id: {
+				$nin: [user._id, ...user.friend_list, ...user.blocked_user_list],
 			},
-			'email first_name last_name'
-		).exec();
+		}).exec();
 		return res.status(200).json(user_list);
 	} catch (error) {
 		next(error);
@@ -183,7 +175,6 @@ exports.send_friend_request = async (req, res, next) => {
 		// 			],
 		// 		},
 		// 	},
-		// 	'email first_name last_name'
 		// ).exec();
 		return res.status(200).json({ success: true });
 	} catch (error) {
@@ -208,10 +199,9 @@ exports.block_user = async (req, res, next) => {
 exports.get_user_friend_list = async (req, res, next) => {
 	try {
 		const user = await User.findById(req.user._id).exec();
-		const friend_list = await User.find(
-			{ _id: { $in: user.friend_list } },
-			'email first_name last_name'
-		).exec();
+		const friend_list = await User.find({
+			_id: { $in: user.friend_list },
+		}).exec();
 		return res.status(200).json(friend_list);
 	} catch (error) {
 		next(error);
@@ -221,28 +211,21 @@ exports.get_user_friend_list = async (req, res, next) => {
 exports.get_user_friend_requests = async (req, res, next) => {
 	try {
 		const user = await User.findById(req.user._id).exec();
-		const friend_requests = await User.find(
-			{ _id: { $in: user.incoming_friend_requests } },
-			'email first_name last_name'
-		).exec();
+		const friend_requests = await User.find({
+			_id: { $in: user.incoming_friend_requests },
+		}).exec();
 		return res.status(200).json(friend_requests);
 	} catch (error) {
 		next(error);
 	}
 };
 
-exports.get_user_friends_data = async (req, res, next) => {
+exports.get_user_contacts = async (req, res, next) => {
 	try {
 		const user = await User.findById(req.user._id).exec();
 		const friends_data = await Promise.all([
-			User.find(
-				{ _id: { $in: user.friend_list } },
-				'email first_name last_name'
-			).exec(),
-			User.find(
-				{ _id: { $in: user.incoming_friend_requests } },
-				'email first_name last_name'
-			).exec(),
+			User.find({ _id: { $in: user.friend_list } }).exec(),
+			User.find({ _id: { $in: user.incoming_friend_requests } }).exec(),
 		]);
 		return res.status(200).json(friends_data);
 	} catch (error) {
@@ -274,14 +257,8 @@ exports.accept_friend_request = async (req, res, next) => {
 			).exec(),
 		]);
 		const friends_data = await Promise.all([
-			User.find(
-				{ _id: { $in: users_data[0].friend_list } },
-				'email first_name last_name'
-			).exec(),
-			User.find(
-				{ _id: { $in: users_data[0].friend_requests } },
-				'email first_name last_name'
-			).exec(),
+			User.find({ _id: { $in: users_data[0].friend_list } }).exec(),
+			User.find({ _id: { $in: users_data[0].friend_requests } }).exec(),
 		]);
 		return res.status(200).json(friends_data);
 	} catch (error) {
@@ -310,10 +287,9 @@ exports.decline_friend_request = async (req, res, next) => {
 				{ new: true }
 			).exec(),
 		]);
-		const friend_requests = await User.find(
-			{ _id: { $in: users_data[0].friend_requests } },
-			'email first_name last_name'
-		).exec();
+		const friend_requests = await User.find({
+			_id: { $in: users_data[0].friend_requests },
+		}).exec();
 		return res.status(200).json(friend_requests);
 	} catch (error) {
 		next(error);
