@@ -43,17 +43,14 @@ router.get('/users/people', user_controller.get_people_list);
 // Block user
 router.put('/users/block', user_controller.block_user);
 
-// Get user's friend list
-router.get('/users/user-friend-list', user_controller.get_user_friend_list);
+// Get logged user's friend requests
+router.get('/users/requests', user_controller.get_request_list);
 
-// Get user's friend requests
-router.get(
-	'/users/user-friend-requests',
-	user_controller.get_user_friend_requests
-);
+// Get logged user's friend list
+router.get('/users/friends', user_controller.get_friend_list);
 
 // Get logged user's contacts (friend list and friend requests)
-router.get('/users/user-contacts', user_controller.get_user_contacts);
+router.get('/users/contacts', user_controller.get_contacts);
 
 // Send friend request
 router.put('/users/friends/request', user_controller.send_friend_request);
@@ -71,12 +68,6 @@ router.get('/users/:userid', user_controller.get_single_user);
 router.get('/users/:userid/posts', post_controller.get_user_post_list);
 
 /////
-// // Get logged user's posts
-// router.get('/posts/user-posts', post_controller.get_user_posts);
-
-// // Get logged user's friends posts
-// router.get('/posts/user-friends-posts', post_controller.get_user_friends_posts);
-
 // Get logged user's timeline posts
 router.get(
 	'/posts/user-timeline-posts',
