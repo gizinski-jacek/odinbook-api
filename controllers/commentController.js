@@ -1,5 +1,6 @@
 require('dotenv').config();
 const Comment = require('../models/comment');
+const Post = require('../models/post');
 const { body, validationResult } = require('express-validator');
 const mongoose = require('mongoose');
 
@@ -28,13 +29,17 @@ exports.create_comment = [
 					.status(404)
 					.json('Error creating comment, try again in a few minutes');
 			}
-			const comment_list = await Comment.find({
-				post_ref: req.params.postid,
-			})
-				.sort({ createdAt: 'asc' })
-				.populate('author', 'first_name last_name')
+			const post = await Post.findByIdAndUpdate(
+				req.params.postid,
+				{
+					$addToSet: { comments: comment._id },
+				},
+				{ new: true }
+			)
+				.populate('author')
+				.populate('comments')
 				.exec();
-			return res.status(200).json(comment_list);
+			return res.status(200).json(post);
 		} catch (error) {
 			next(error);
 		}
@@ -50,7 +55,7 @@ exports.get_post_comments = async (req, res, next) => {
 			post_ref: req.params.postid,
 		})
 			.sort({ createdAt: 'asc' })
-			.populate('author', 'first_name last_name')
+			.populate('author')
 			.exec();
 		return res.status(200).json(comment_list);
 	} catch (error) {
@@ -65,13 +70,13 @@ exports.update_comment = [
 		.escape(),
 	async (req, res, next) => {
 		try {
-			if (!mongoose.Types.ObjectId.isValid(req.params.postid)) {
+			if (!mongoose.Types.ObjectId.isValid(req.body.post_ref)) {
 				return res.status(404).json('Invalid post Id');
 			}
-			if (!mongoose.Types.ObjectId.isValid(req.params.commentid)) {
+			if (!mongoose.Types.ObjectId.isValid(req.body._id)) {
 				return res.status(404).json('Invalid comment Id');
 			}
-			const theComment = await Comment.findById(req.params.commentid).exec();
+			const theComment = await Comment.findById(req.body._id).exec();
 			const errors = validationResult(req);
 			const updatedComment = new Comment({
 				_id: theComment._id,
@@ -84,20 +89,16 @@ exports.update_comment = [
 				return res.status(404).json(errors.array());
 			}
 			const comment = await Comment.findByIdAndUpdate(
-				req.params.commentid,
+				theComment._id,
 				updatedComment,
-				{ timestamps: true }
-			);
+				{ timestamps: true, new: true }
+			)
+				.populate('author')
+				.exec();
 			if (!comment) {
 				return res.status(404).json('Comment not found. Nothing to update');
 			}
-			const comment_list = await Comment.find({
-				post_ref: req.params.postid,
-			})
-				.sort({ createdAt: 'asc' })
-				.populate('author', 'first_name last_name')
-				.exec();
-			return res.status(200).json(comment_list);
+			return res.status(200).json(comment);
 		} catch (error) {
 			next(error);
 		}
@@ -122,7 +123,7 @@ exports.delete_comment = async (req, res, next) => {
 			post_ref: req.params.postid,
 		})
 			.sort({ createdAt: 'asc' })
-			.populate('author', 'first_name last_name')
+			.populate('author')
 			.exec();
 		return res.status(200).json(comment_list);
 	} catch (error) {
@@ -132,48 +133,37 @@ exports.delete_comment = async (req, res, next) => {
 
 exports.change_like_status = async (req, res, next) => {
 	try {
-		if (!mongoose.Types.ObjectId.isValid(req.params.postid)) {
+		if (!mongoose.Types.ObjectId.isValid(req.body.commentPostRef)) {
 			return res.status(404).json('Invalid post Id');
 		}
-		if (!mongoose.Types.ObjectId.isValid(req.params.commentid)) {
+		if (!mongoose.Types.ObjectId.isValid(req.body.commentId)) {
 			return res.status(404).json('Invalid comment Id');
 		}
-		const theComment = await Comment.findOne({
-			_id: req.params.commentid,
-			likes: { $in: req.user._id },
-		}).exec();
-		if (theComment) {
+		const theComment = await Comment.findById(req.body.commentId).exec();
+		if (theComment.likes.includes(req.user._id)) {
 			const comment = await Comment.findByIdAndUpdate(
-				req.params.commentid,
+				req.body.commentId,
 				{ $pull: { likes: req.user._id } },
-				{ timestamps: false }
-			).exec();
+				{ timestamps: false, new: true }
+			)
+				.populate('author')
+				.exec();
 			if (!comment) {
 				return res.status(404).json('Comment not found, nothing to unlike');
 			}
-			const comment_list = await Comment.find({
-				post_ref: req.params.postid,
-			})
-				.sort({ createdAt: 'asc' })
-				.populate('author', 'first_name last_name')
-				.exec();
-			return res.status(200).json(comment_list);
+			return res.status(200).json(comment);
 		} else {
 			const comment = await Comment.findByIdAndUpdate(
-				req.params.commentid,
+				req.body.commentId,
 				{ $addToSet: { likes: req.user._id } },
-				{ timestamps: false }
-			).exec();
-			if (!comment) {
-				return res.status(404).json('Comment not found, nothing to like');
-			}
-			const comment_list = await Comment.find({
-				post_ref: req.params.postid,
-			})
-				.sort({ createdAt: 'asc' })
-				.populate('author', 'first_name last_name')
+				{ timestamps: false, new: true }
+			)
+				.populate('author')
 				.exec();
-			return res.status(200).json(comment_list);
+			if (!comment) {
+				return res.status(404).json('Comment not found, nothing to unlike');
+			}
+			return res.status(200).json(comment);
 		}
 	} catch (error) {
 		next(error);
