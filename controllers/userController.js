@@ -196,19 +196,7 @@ exports.block_user = async (req, res, next) => {
 	}
 };
 
-exports.get_user_friend_list = async (req, res, next) => {
-	try {
-		const user = await User.findById(req.user._id).exec();
-		const friend_list = await User.find({
-			_id: { $in: user.friend_list },
-		}).exec();
-		return res.status(200).json(friend_list);
-	} catch (error) {
-		next(error);
-	}
-};
-
-exports.get_user_friend_requests = async (req, res, next) => {
+exports.get_request_list = async (req, res, next) => {
 	try {
 		const user = await User.findById(req.user._id).exec();
 		const friend_requests = await User.find({
@@ -220,14 +208,26 @@ exports.get_user_friend_requests = async (req, res, next) => {
 	}
 };
 
-exports.get_user_contacts = async (req, res, next) => {
+exports.get_friend_list = async (req, res, next) => {
 	try {
 		const user = await User.findById(req.user._id).exec();
-		const friends_data = await Promise.all([
-			User.find({ _id: { $in: user.friend_list } }).exec(),
+		const friend_list = await User.find({
+			_id: { $in: user.friend_list },
+		}).exec();
+		return res.status(200).json(friend_list);
+	} catch (error) {
+		next(error);
+	}
+};
+
+exports.get_contacts = async (req, res, next) => {
+	try {
+		const user = await User.findById(req.user._id).exec();
+		const contacts_data = await Promise.all([
 			User.find({ _id: { $in: user.incoming_friend_requests } }).exec(),
+			User.find({ _id: { $in: user.friend_list } }).exec(),
 		]);
-		return res.status(200).json(friends_data);
+		return res.status(200).json(contacts_data);
 	} catch (error) {
 		next(error);
 	}
@@ -239,7 +239,7 @@ exports.accept_friend_request = async (req, res, next) => {
 			return res.status(404).json('Invalid request Id');
 		}
 		const users_data = await Promise.all([
-			await User.findByIdAndUpdate(
+			User.findByIdAndUpdate(
 				req.user._id,
 				{
 					$addToSet: { friend_list: req.body.requestId },
@@ -256,11 +256,11 @@ exports.accept_friend_request = async (req, res, next) => {
 				{ new: true }
 			).exec(),
 		]);
-		const friends_data = await Promise.all([
-			User.find({ _id: { $in: users_data[0].friend_list } }).exec(),
+		const contacts_data = await Promise.all([
 			User.find({ _id: { $in: users_data[0].friend_requests } }).exec(),
+			User.find({ _id: { $in: users_data[0].friend_list } }).exec(),
 		]);
-		return res.status(200).json(friends_data);
+		return res.status(200).json(contacts_data);
 	} catch (error) {
 		next(error);
 	}
