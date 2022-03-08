@@ -41,7 +41,7 @@ router.use(
 router.get('/users/people', user_controller.get_people_list);
 
 // Block user
-router.put('/users/block', user_controller.block_user);
+router.put('/users/block', user_controller.change_block_status);
 
 // Get logged user's friend requests
 router.get('/users/requests', user_controller.get_request_list);
@@ -49,17 +49,17 @@ router.get('/users/requests', user_controller.get_request_list);
 // Get logged user's friend list
 router.get('/users/friends', user_controller.get_friend_list);
 
-// Get logged user's contacts (friend list and friend requests)
-router.get('/users/contacts', user_controller.get_contacts);
-
 // Send friend request
 router.put('/users/friends/request', user_controller.send_friend_request);
 
-// Update user's friend list after accepting
+// Remove friend
+router.put('/users/friends/remove', user_controller.remove_friend);
+
+// Accept friend request
 router.put('/users/friends/accept', user_controller.accept_friend_request);
 
-// Update user's friend requests after declining
-router.put('/users/friends/decline', user_controller.decline_friend_request);
+// Cancel/decline friend request
+router.put('/users/friends/cancel', user_controller.cancel_friend_request);
 
 // Get single user's data
 router.get('/users/:userid', user_controller.get_single_user);
@@ -77,8 +77,8 @@ router.get(
 // Create new post
 router.post('/posts', post_controller.create_post);
 
-// Get single post
-router.get('/posts/:postid', post_controller.get_single_post);
+// // // Get single post
+// // router.get('/posts/:postid', post_controller.get_single_post);
 
 // Update a post
 router.put('/posts/:postid', post_controller.update_post);
