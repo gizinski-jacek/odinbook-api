@@ -23,6 +23,7 @@ const UserSchema = new Schema(
 		},
 		friend_list: [{ type: Schema.Types.ObjectId, ref: 'User' }],
 		blocked_user_list: [{ type: Schema.Types.ObjectId, ref: 'User' }],
+		blocked_by_other_list: [{ type: Schema.Types.ObjectId, ref: 'User' }],
 		incoming_friend_requests: [{ type: Schema.Types.ObjectId, ref: 'User' }],
 		outgoing_friend_requests: [{ type: Schema.Types.ObjectId, ref: 'User' }],
 	},
