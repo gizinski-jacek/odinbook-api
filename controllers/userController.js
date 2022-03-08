@@ -181,12 +181,20 @@ exports.remove_friend = async (req, res, next) => {
 			return res.status(404).json('Invalid user Id');
 		}
 		const users_data = await Promise.all([
-			User.findByIdAndUpdate(req.body.userId, {
-				$pull: { friend_list: req.user._id },
-			}).exec(),
-			User.findByIdAndUpdate(req.user._id, {
-				$pull: { friend_list: req.body.userId },
-			}).exec(),
+			User.findByIdAndUpdate(
+				req.body.userId,
+				{
+					$pull: { friend_list: req.user._id },
+				},
+				{ new: true }
+			).exec(),
+			User.findByIdAndUpdate(
+				req.user._id,
+				{
+					$pull: { friend_list: req.body.userId },
+				},
+				{ new: true }
+			).exec(),
 		]);
 		return res.status(200).json(users_data);
 	} catch (error) {
