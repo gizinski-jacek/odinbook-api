@@ -37,7 +37,7 @@ exports.create_comment = [
 				{ new: true }
 			)
 				.populate('author')
-				.populate('comments')
+				.populate({ path: 'comments', populate: { path: 'author' } })
 				.exec();
 			return res.status(200).json(post);
 		} catch (error) {
