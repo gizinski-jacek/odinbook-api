@@ -122,13 +122,13 @@ router.put(
 
 /////
 // Search people
-router.get('/users/search', user_controller.search_people);
+router.get('/search/users', user_controller.search_people);
 
 // Search user's friend list
-router.get('/users/:userid/search', user_controller.search_user_friend_list);
+router.get('/search/:userid/friends', user_controller.search_user_friend_list);
 
 // Search posts
-router.get('/posts/search', post_controller.search_posts);
+router.get('/search/posts', post_controller.search_posts);
 
 // // Search messages
 // router.get('/messages/search', user_controller.search_messages);
