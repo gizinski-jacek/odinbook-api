@@ -64,6 +64,12 @@ router.put('/users/friends/cancel', user_controller.cancel_friend_request);
 // Get single user's data
 router.get('/users/:userid', user_controller.get_single_user);
 
+// Get single user's friend list
+router.get(
+	'/users/:userid/friends',
+	user_controller.get_single_user_friend_list
+);
+
 // Get user's post list
 router.get('/users/:userid/posts', post_controller.get_user_post_list);
 
@@ -113,5 +119,18 @@ router.put(
 	'/posts/:postid/comments/:commentid/like',
 	comment_controller.change_like_status
 );
+
+/////
+// Search people
+router.get('/users/search', user_controller.search_people);
+
+// Search user's friend list
+router.get('/users/:userid/search', user_controller.search_user_friend_list);
+
+// Search posts
+router.get('/posts/search', post_controller.search_posts);
+
+// // Search messages
+// router.get('/messages/search', user_controller.search_messages);
 
 module.exports = router;
