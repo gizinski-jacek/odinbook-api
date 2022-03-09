@@ -3,6 +3,7 @@ const Post = require('../models/post');
 const User = require('../models/user');
 const { body, validationResult } = require('express-validator');
 const mongoose = require('mongoose');
+const url = require('url');
 
 exports.create_post = [
 	body('text', 'Text is invalid')
@@ -179,6 +180,20 @@ exports.change_like_status = async (req, res, next) => {
 				.exec();
 			return res.status(200).json(post);
 		}
+	} catch (error) {
+		next(error);
+	}
+};
+
+exports.search_posts = async (req, res, next) => {
+	try {
+		const query = url.parse(req.url, true).query.q;
+		const search_post_results = await Post.find({
+			text: { $regex: query, $options: 'i' },
+		})
+			.populate('author')
+			.exec();
+		return res.status(200).json(search_post_results);
 	} catch (error) {
 		next(error);
 	}
