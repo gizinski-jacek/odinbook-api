@@ -5,6 +5,7 @@ const jwt = require('jsonwebtoken');
 const passport = require('passport');
 const bcryptjs = require('bcryptjs');
 const mongoose = require('mongoose');
+const url = require('url');
 
 exports.sign_up_user = [
 	body('first_name', 'First name is invalid')
@@ -118,6 +119,55 @@ exports.get_single_user = async (req, res, next) => {
 		}
 		const user = await User.findById(req.params.userid).exec();
 		return res.status(200).json(user);
+	} catch (error) {
+		next(error);
+	}
+};
+
+exports.get_single_user_friend_list = async (req, res, next) => {
+	try {
+		if (!mongoose.Types.ObjectId.isValid(req.params.userid)) {
+			return res.status(404).json('Invalid user Id');
+		}
+		const friend_list = await User.find({
+			friend_list: req.params.userid,
+		}).exec();
+		return res.status(200).json(friend_list);
+	} catch (error) {
+		next(error);
+	}
+};
+
+exports.search_user_friend_list = async (req, res, next) => {
+	try {
+		if (!mongoose.Types.ObjectId.isValid(req.params.userid)) {
+			return res.status(404).json('Invalid user Id');
+		}
+		const query = url.parse(req.url, true).query.q;
+		const search_friend_results = await User.find({
+			friend_list: { $in: req.params.userid },
+			$or: [
+				{ first_name: { $regex: query, $options: 'i' } },
+				{ last_name: { $regex: query, $options: 'i' } },
+			],
+		}).exec();
+		return res.status(200).json(search_friend_results);
+	} catch (error) {
+		next(error);
+	}
+};
+
+exports.search_people = async (req, res, next) => {
+	try {
+		const query = url.parse(req.url, true).query.q;
+		const search_person_results = await User.find({
+			_id: { $ne: req.user._id },
+			$or: [
+				{ first_name: { $regex: query, $options: 'i' } },
+				{ last_name: { $regex: query, $options: 'i' } },
+			],
+		}).exec();
+		return res.status(200).json(search_person_results);
 	} catch (error) {
 		next(error);
 	}
