@@ -26,6 +26,10 @@ const UserSchema = new Schema(
 		blocked_by_other_list: [{ type: Schema.Types.ObjectId, ref: 'User' }],
 		incoming_friend_requests: [{ type: Schema.Types.ObjectId, ref: 'User' }],
 		outgoing_friend_requests: [{ type: Schema.Types.ObjectId, ref: 'User' }],
+		profile_picture: { type: String, maxlength: 512 },
+		cover_photo: { type: String, maxlength: 512 },
+		bio: { type: String, maxlength: 512 },
+		hobbies: [{ type: String, minlength: 4, maxlength: 16 }],
 	},
 	{ toJSON: { virtuals: true } }
 );
