@@ -178,12 +178,7 @@ exports.get_people_list = async (req, res, next) => {
 		const user = await User.findById(req.user._id).exec();
 		const user_list = await User.find({
 			_id: {
-				$nin: [
-					user._id,
-					...user.friend_list,
-					...user.blocked_user_list,
-					...user.blocked_by_other_list,
-				],
+				$nin: [user._id, ...user.friend_list],
 			},
 		}).exec();
 		return res.status(200).json(user_list);
