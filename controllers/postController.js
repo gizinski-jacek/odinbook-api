@@ -99,7 +99,6 @@ exports.update_post = [
 			if (!post) {
 				return res.status(404).json('Post not found. Nothing to update');
 			}
-			console.log(post);
 			return res.status(200).json(post);
 		} catch (error) {
 			next(error);
