@@ -46,23 +46,6 @@ exports.create_comment = [
 	},
 ];
 
-exports.get_post_comments = async (req, res, next) => {
-	try {
-		if (!mongoose.Types.ObjectId.isValid(req.params.postid)) {
-			return res.status(404).json('Invalid post Id');
-		}
-		const comment_list = await Comment.find({
-			post_ref: req.params.postid,
-		})
-			.sort({ createdAt: 'asc' })
-			.populate('author')
-			.exec();
-		return res.status(200).json(comment_list);
-	} catch (error) {
-		next(error);
-	}
-};
-
 exports.update_comment = [
 	body('text', 'Text is invalid')
 		.trim()
