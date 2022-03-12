@@ -36,18 +36,14 @@ router.use(
 	}
 );
 /////
+// Get logged user's friend requests
+router.get('/users/contacts', user_controller.get_contacts_list);
 
-// Get list of people not on logged user's friend list
+// Get list of all people
 router.get('/users/people', user_controller.get_people_list);
 
 // Block user
 router.put('/users/block', user_controller.change_block_status);
-
-// Get logged user's friend requests
-router.get('/users/requests', user_controller.get_request_list);
-
-// Get logged user's friend list
-router.get('/users/friends', user_controller.get_friend_list);
 
 // Send friend request
 router.put('/users/friends/request', user_controller.send_friend_request);
@@ -63,6 +59,9 @@ router.put('/users/friends/cancel', user_controller.cancel_friend_request);
 
 // Get single user's data
 router.get('/users/:userid', user_controller.get_single_user);
+
+// Update user's profile data
+router.put('/users/:userid', user_controller.update_user_data);
 
 // Get single user's friend list
 router.get(
