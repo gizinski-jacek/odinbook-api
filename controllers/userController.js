@@ -270,14 +270,20 @@ exports.cancel_friend_request = async (req, res, next) => {
 			User.findByIdAndUpdate(
 				req.body.userId,
 				{
-					$pull: { incoming_friend_requests: req.user._id },
+					$pull: {
+						incoming_friend_requests: req.user._id,
+						outgoing_friend_requests: req.user._id,
+					},
 				},
 				{ new: true }
 			).exec(),
 			User.findByIdAndUpdate(
 				req.user._id,
 				{
-					$pull: { outgoing_friend_requests: req.body.userId },
+					$pull: {
+						incoming_friend_requests: req.body.userId,
+						outgoing_friend_requests: req.body.userId,
+					},
 				},
 				{ new: true }
 			)
