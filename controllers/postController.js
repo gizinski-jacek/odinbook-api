@@ -123,11 +123,17 @@ exports.update_post = [
 				new: true,
 			})
 				.populate('author')
-				.populate('comments')
+				.populate({
+					path: 'comments',
+					populate: {
+						path: 'author',
+					},
+				})
 				.exec();
 			if (!post) {
 				return res.status(404).json('Post not found. Nothing to update');
 			}
+			console.log(post);
 			return res.status(200).json(post);
 		} catch (error) {
 			next(error);
@@ -166,7 +172,12 @@ exports.change_like_status = async (req, res, next) => {
 				{ timestamps: false, new: true }
 			)
 				.populate('author')
-				.populate('comments')
+				.populate({
+					path: 'comments',
+					populate: {
+						path: 'author',
+					},
+				})
 				.exec();
 			return res.status(200).json(post);
 		} else {
@@ -176,7 +187,12 @@ exports.change_like_status = async (req, res, next) => {
 				{ timestamps: false, new: true }
 			)
 				.populate('author')
-				.populate('comments')
+				.populate({
+					path: 'comments',
+					populate: {
+						path: 'author',
+					},
+				})
 				.exec();
 			return res.status(200).json(post);
 		}
