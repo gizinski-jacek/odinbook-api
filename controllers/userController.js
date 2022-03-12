@@ -69,7 +69,6 @@ exports.log_in_user = async (req, res, next) => {
 				}
 				const payload = {
 					_id: user._id,
-					email: user.email,
 					first_name: user.first_name,
 					last_name: user.last_name,
 				};
@@ -81,7 +80,9 @@ exports.log_in_user = async (req, res, next) => {
 					secure: false,
 					sameSite: 'strict',
 				});
-				return res.status(200).json({ payload });
+				const data = { ...user._doc };
+				delete data.password;
+				return res.status(200).json(data);
 			} catch (error) {
 				next(error);
 			}
@@ -104,10 +105,10 @@ exports.verify_user_token = async (req, res, next) => {
 			const user = await User.findById(decodedToken._id).exec();
 			return res.status(200).json(user);
 		}
-		return res.status(200).json(null);
+		return res.status(401).json(null);
 	} catch (error) {
 		res.clearCookie('token', { path: '/' });
-		return res.status(403).json('Failed to verify user token');
+		return res.status(401).json('Failed to verify user token');
 	}
 };
 
