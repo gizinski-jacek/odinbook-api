@@ -1,5 +1,6 @@
 require('dotenv').config();
 const User = require('../models/user');
+const Post = require('../models/post');
 const { body, validationResult } = require('express-validator');
 const jwt = require('jsonwebtoken');
 const passport = require('passport');
@@ -110,74 +111,13 @@ exports.verify_user_token = async (req, res, next) => {
 	}
 };
 
-exports.update_user_data = async (req, res, next) => {
+exports.get_contacts_list = async (req, res, next) => {
 	try {
-		// if (!mongoose.Types.ObjectId.isValid(req.params.userid)) {
-		// 	return res.status(404).json('Invalid user Id');
-		// }
-		// const user = await User.findById(req.params.userid).exec();
-		// return res.status(200).json(user);
-	} catch (error) {
-		next(error);
-	}
-};
-
-exports.get_single_user = async (req, res, next) => {
-	try {
-		if (!mongoose.Types.ObjectId.isValid(req.params.userid)) {
-			return res.status(404).json('Invalid user Id');
-		}
-		const user = await User.findById(req.params.userid).exec();
+		const user = await User.findById(req.user._id)
+			.populate('incoming_friend_requests')
+			.populate('friend_list')
+			.exec();
 		return res.status(200).json(user);
-	} catch (error) {
-		next(error);
-	}
-};
-
-exports.get_single_user_friend_list = async (req, res, next) => {
-	try {
-		if (!mongoose.Types.ObjectId.isValid(req.params.userid)) {
-			return res.status(404).json('Invalid user Id');
-		}
-		const friend_list = await User.find({
-			friend_list: req.params.userid,
-		}).exec();
-		return res.status(200).json(friend_list);
-	} catch (error) {
-		next(error);
-	}
-};
-
-exports.search_user_friend_list = async (req, res, next) => {
-	try {
-		if (!mongoose.Types.ObjectId.isValid(req.params.userid)) {
-			return res.status(404).json('Invalid user Id');
-		}
-		const query = url.parse(req.url, true).query.q;
-		const search_friend_results = await User.find({
-			friend_list: { $in: req.params.userid },
-			$or: [
-				{ first_name: { $regex: query, $options: 'i' } },
-				{ last_name: { $regex: query, $options: 'i' } },
-			],
-		}).exec();
-		return res.status(200).json(search_friend_results);
-	} catch (error) {
-		next(error);
-	}
-};
-
-exports.search_people = async (req, res, next) => {
-	try {
-		const query = url.parse(req.url, true).query.q;
-		const search_person_results = await User.find({
-			_id: { $ne: req.user._id },
-			$or: [
-				{ first_name: { $regex: query, $options: 'i' } },
-				{ last_name: { $regex: query, $options: 'i' } },
-			],
-		}).exec();
-		return res.status(200).json(search_person_results);
 	} catch (error) {
 		next(error);
 	}
@@ -197,76 +137,13 @@ exports.get_people_list = async (req, res, next) => {
 	}
 };
 
-exports.send_friend_request = async (req, res, next) => {
-	try {
-		if (!mongoose.Types.ObjectId.isValid(req.body.userId)) {
-			return res.status(404).json('Invalid user Id');
-		}
-		const user = await User.findById(req.body.userId).exec();
-		if (user.blocked_user_list.includes(req.user._id)) {
-			return res
-				.status(200)
-				.json('This user has blocked you. Unable to send friend request');
-		}
-		const users_data = await Promise.all([
-			User.findByIdAndUpdate(
-				req.body.userId,
-				{
-					$addToSet: { incoming_friend_requests: req.user._id },
-				},
-				{ new: true }
-			).exec(),
-			User.findByIdAndUpdate(
-				req.user._id,
-				{
-					$addToSet: { outgoing_friend_requests: req.body.userId },
-				},
-				{ new: true }
-			).exec(),
-		]);
-		return res.status(200).json(users_data);
-	} catch (error) {
-		next(error);
-	}
-};
-
-exports.remove_friend = async (req, res, next) => {
-	try {
-		if (!mongoose.Types.ObjectId.isValid(req.body.userId)) {
-			return res.status(404).json('Invalid user Id');
-		}
-		const users_data = await Promise.all([
-			User.findByIdAndUpdate(
-				req.body.userId,
-				{
-					$pull: { friend_list: req.user._id },
-				},
-				{ new: true }
-			).exec(),
-			User.findByIdAndUpdate(
-				req.user._id,
-				{
-					$pull: { friend_list: req.body.userId },
-				},
-				{ new: true }
-			)
-				.populate('incoming_friend_requests')
-				.populate('friend_list')
-				.exec(),
-		]);
-		return res.status(200).json(users_data);
-	} catch (error) {
-		next(error);
-	}
-};
-
 exports.change_block_status = async (req, res, next) => {
 	try {
 		if (!mongoose.Types.ObjectId.isValid(req.body.userId)) {
 			return res.status(404).json('Invalid user Id');
 		}
-		const theUser = await User.findById(req.user._id).exec();
-		if (theUser.blocked_user_list.includes(req.body.userId)) {
+		const user = await User.findById(req.user._id).exec();
+		if (user.blocked_user_list.includes(req.body.userId)) {
 			const users_data = await Promise.all([
 				User.findByIdAndUpdate(
 					req.body.userId,
@@ -318,13 +195,34 @@ exports.change_block_status = async (req, res, next) => {
 	}
 };
 
-exports.get_contacts_list = async (req, res, next) => {
+exports.send_friend_request = async (req, res, next) => {
 	try {
-		const user = await User.findById(req.user._id)
-			.populate('incoming_friend_requests')
-			.populate('friend_list')
-			.exec();
-		return res.status(200).json(user);
+		if (!mongoose.Types.ObjectId.isValid(req.body.userId)) {
+			return res.status(404).json('Invalid user Id');
+		}
+		const user = await User.findById(req.body.userId).exec();
+		if (user.blocked_user_list.includes(req.user._id)) {
+			return res
+				.status(200)
+				.json('This user has blocked you. Unable to send friend request');
+		}
+		const users_data = await Promise.all([
+			User.findByIdAndUpdate(
+				req.body.userId,
+				{
+					$addToSet: { incoming_friend_requests: req.user._id },
+				},
+				{ new: true }
+			).exec(),
+			User.findByIdAndUpdate(
+				req.user._id,
+				{
+					$addToSet: { outgoing_friend_requests: req.body.userId },
+				},
+				{ new: true }
+			).exec(),
+		]);
+		return res.status(200).json(users_data);
 	} catch (error) {
 		next(error);
 	}
@@ -387,6 +285,130 @@ exports.cancel_friend_request = async (req, res, next) => {
 				.exec(),
 		]);
 		return res.status(200).json(users_data);
+	} catch (error) {
+		next(error);
+	}
+};
+
+exports.remove_friend = async (req, res, next) => {
+	try {
+		if (!mongoose.Types.ObjectId.isValid(req.body.userId)) {
+			return res.status(404).json('Invalid user Id');
+		}
+		const users_data = await Promise.all([
+			User.findByIdAndUpdate(
+				req.body.userId,
+				{
+					$pull: { friend_list: req.user._id },
+				},
+				{ new: true }
+			).exec(),
+			User.findByIdAndUpdate(
+				req.user._id,
+				{
+					$pull: { friend_list: req.body.userId },
+				},
+				{ new: true }
+			)
+				.populate('incoming_friend_requests')
+				.populate('friend_list')
+				.exec(),
+		]);
+		return res.status(200).json(users_data);
+	} catch (error) {
+		next(error);
+	}
+};
+
+exports.get_single_user_friend_list = async (req, res, next) => {
+	try {
+		if (!mongoose.Types.ObjectId.isValid(req.params.userid)) {
+			return res.status(404).json('Invalid user Id');
+		}
+		const friend_list = await User.find({
+			friend_list: req.params.userid,
+		}).exec();
+		return res.status(200).json(friend_list);
+	} catch (error) {
+		next(error);
+	}
+};
+
+exports.get_single_user_post_list = async (req, res, next) => {
+	try {
+		if (!mongoose.Types.ObjectId.isValid(req.params.userid)) {
+			return res.status(404).json('Invalid post Id');
+		}
+		const post_list = await Post.find({ author: req.params.userid })
+			.sort({ createdAt: 'desc' })
+			.populate('author')
+			.populate({
+				path: 'comments',
+				populate: {
+					path: 'author',
+				},
+			})
+			.exec();
+		return res.status(200).json(post_list);
+	} catch (error) {
+		next(error);
+	}
+};
+
+exports.get_single_user = async (req, res, next) => {
+	try {
+		if (!mongoose.Types.ObjectId.isValid(req.params.userid)) {
+			return res.status(404).json('Invalid user Id');
+		}
+		const user = await User.findById(req.params.userid).exec();
+		return res.status(200).json(user);
+	} catch (error) {
+		next(error);
+	}
+};
+
+exports.update_user_data = async (req, res, next) => {
+	try {
+		// if (!mongoose.Types.ObjectId.isValid(req.params.userid)) {
+		// 	return res.status(404).json('Invalid user Id');
+		// }
+		// const user = await User.findById(req.params.userid).exec();
+		// return res.status(200).json(user);
+	} catch (error) {
+		next(error);
+	}
+};
+
+exports.search_people = async (req, res, next) => {
+	try {
+		const query = url.parse(req.url, true).query.q;
+		const search_person_results = await User.find({
+			_id: { $ne: req.user._id },
+			$or: [
+				{ first_name: { $regex: query, $options: 'i' } },
+				{ last_name: { $regex: query, $options: 'i' } },
+			],
+		}).exec();
+		return res.status(200).json(search_person_results);
+	} catch (error) {
+		next(error);
+	}
+};
+
+exports.search_user_friend_list = async (req, res, next) => {
+	try {
+		if (!mongoose.Types.ObjectId.isValid(req.params.userid)) {
+			return res.status(404).json('Invalid user Id');
+		}
+		const query = url.parse(req.url, true).query.q;
+		const search_friend_results = await User.find({
+			friend_list: { $in: req.params.userid },
+			$or: [
+				{ first_name: { $regex: query, $options: 'i' } },
+				{ last_name: { $regex: query, $options: 'i' } },
+			],
+		}).exec();
+		return res.status(200).json(search_friend_results);
 	} catch (error) {
 		next(error);
 	}
