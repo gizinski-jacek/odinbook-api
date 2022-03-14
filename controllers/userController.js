@@ -19,7 +19,14 @@ exports.sign_up_user = [
 		.escape(),
 	body('email', 'Email is invalid')
 		.trim()
-		.isLength({ min: 8, max: 64 })
+		.isEmail()
+		.custom(async (value) => {
+			const user_list = await User.find({ email: value }).exec();
+			if (user_list.length > 0) {
+				throw new Error('Email is already taken');
+			}
+			return true;
+		})
 		.escape(),
 	body('password', 'Password is invalid')
 		.trim()
@@ -27,10 +34,6 @@ exports.sign_up_user = [
 		.escape(),
 	async (req, res, next) => {
 		try {
-			const user_list = await User.find({ email: req.body.email }).exec();
-			if (user_list.length > 0) {
-				return res.status(409).json('Email is already taken');
-			}
 			const errors = validationResult(req);
 			const newUser = new User({
 				first_name: req.body.first_name,
@@ -44,9 +47,7 @@ exports.sign_up_user = [
 			newUser.password = hashedPassword;
 			const user = await newUser.save();
 			if (!user) {
-				return res
-					.status(404)
-					.json('Error creating user, try again in a few minutes');
+				return res.status(404).json('Error creating user');
 			}
 			return res.status(200).json('User created successfully');
 		} catch (error) {
@@ -90,6 +91,42 @@ exports.log_in_user = async (req, res, next) => {
 	)(req, res, next);
 };
 
+exports.log_in_facebook_user_callback = async (req, res, next) => {
+	passport.authenticate(
+		'facebook',
+		{ session: false },
+		async (error, user, msg) => {
+			if (error) {
+				return next(error);
+			}
+			try {
+				if (!user) {
+					return res.status(401).json(msg);
+				}
+				const payload = {
+					facebookId: user.facebookId,
+					_id: user._id,
+					first_name: user.first_name,
+					last_name: user.last_name,
+				};
+				const token = jwt.sign(payload, process.env.STRATEGY_SECRET, {
+					expiresIn: '150m',
+				});
+				res.cookie('token', token, {
+					httpOnly: true,
+					secure: false,
+					sameSite: 'strict',
+				});
+				const data = { ...user._doc };
+				delete data.password;
+				return res.redirect(process.env.CLIENT_URL);
+			} catch (error) {
+				next(error);
+			}
+		}
+	)(req, res, next);
+};
+
 exports.log_out_user = (req, res, next) => {
 	res.clearCookie('token', { path: '/' });
 	return res.status(200).json({ success: true });
@@ -105,7 +142,7 @@ exports.verify_user_token = async (req, res, next) => {
 			const user = await User.findById(decodedToken._id).exec();
 			return res.status(200).json(user);
 		}
-		return res.status(401).json(null);
+		return res.status(200).json(null);
 	} catch (error) {
 		res.clearCookie('token', { path: '/' });
 		return res.status(401).json('Failed to verify user token');
