@@ -160,7 +160,7 @@ exports.password_change = [
 			if (!errors.isEmpty()) {
 				return res.status(404).json(errors.array());
 			}
-			const user = User.findById(req.user._id);
+			const user = await User.findById(req.user._id).select('+password').exec();
 			const match = await bcryptjs.compare(req.body.password, user.password);
 			if (match) {
 				return res
