@@ -49,6 +49,9 @@ router.use(
 
 /////
 // Get current user's contacts
+router.put('/users/password-change', user_controller.password_change);
+
+// Get current user's contacts
 router.get('/users/contacts', user_controller.get_contacts_list);
 
 // Get all users
