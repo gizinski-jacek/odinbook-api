@@ -149,6 +149,33 @@ exports.verify_user_token = async (req, res, next) => {
 	}
 };
 
+exports.password_change = [
+	body('password', 'Password is invalid')
+		.trim()
+		.isLength({ min: 8, max: 64 })
+		.escape(),
+	async (req, res, next) => {
+		try {
+			const errors = validationResult(req);
+			if (!errors.isEmpty()) {
+				return res.status(404).json(errors.array());
+			}
+			const user = User.findById(req.user._id);
+			const match = await bcryptjs.compare(req.body.password, user.password);
+			if (match) {
+				return res
+					.status(409)
+					.json('New password must be different from old password');
+			}
+			const hashedPassword = await bcryptjs.hash(req.body.password, 10);
+			await User.findByIdAndUpdate(user._id, { password: hashedPassword });
+			return res.status(200).json('Password changed successfully');
+		} catch (error) {
+			next(error);
+		}
+	},
+];
+
 exports.get_contacts_list = async (req, res, next) => {
 	try {
 		const user = await User.findById(req.user._id)
