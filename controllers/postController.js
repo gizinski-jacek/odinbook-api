@@ -43,9 +43,7 @@ exports.create_post = [
 			}
 			const post = await newPost.save();
 			if (!post) {
-				return res
-					.status(404)
-					.json('Error creating post, try again in a few minutes');
+				return res.status(404).json('Error creating post');
 			}
 			const user = await User.findById(req.user._id).exec();
 			const timeline_post_list = await Post.find({
@@ -97,7 +95,7 @@ exports.update_post = [
 				})
 				.exec();
 			if (!post) {
-				return res.status(404).json('Post not found. Nothing to update');
+				return res.status(404).json('Post not found');
 			}
 			return res.status(200).json(post);
 		} catch (error) {
@@ -113,7 +111,7 @@ exports.delete_post = async (req, res, next) => {
 		}
 		const post = await Post.findByIdAndDelete(req.params.postid).exec();
 		if (!post) {
-			return res.status(404).json('Post not found, nothing to delete');
+			return res.status(404).json('Post not found');
 		}
 		return res.status(200).json({ success: true });
 	} catch (error) {
@@ -128,7 +126,7 @@ exports.change_like_status = async (req, res, next) => {
 		}
 		const thePost = await Post.findById(req.body.postId).exec();
 		if (!thePost) {
-			return res.status(404).json('Post not found, nothing to like or unlike');
+			return res.status(404).json('Post not found');
 		}
 		if (thePost.likes.includes(req.user._id)) {
 			const post = await Post.findByIdAndUpdate(

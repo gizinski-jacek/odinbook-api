@@ -25,9 +25,7 @@ exports.create_comment = [
 			}
 			const comment = await newComment.save();
 			if (!comment) {
-				return res
-					.status(404)
-					.json('Error creating comment, try again in a few minutes');
+				return res.status(404).json('Error creating comment');
 			}
 			const post = await Post.findByIdAndUpdate(
 				req.params.postid,
@@ -79,7 +77,7 @@ exports.update_comment = [
 				.populate('author')
 				.exec();
 			if (!comment) {
-				return res.status(404).json('Comment not found. Nothing to update');
+				return res.status(404).json('Comment not found');
 			}
 			return res.status(200).json(comment);
 		} catch (error) {
@@ -100,7 +98,7 @@ exports.delete_comment = async (req, res, next) => {
 			req.params.commentid
 		).exec();
 		if (!comment) {
-			return res.status(404).json('Comment not found, nothing to delete');
+			return res.status(404).json('Comment not found');
 		}
 		const comment_list = await Comment.find({
 			post_ref: req.params.postid,
@@ -132,7 +130,7 @@ exports.change_like_status = async (req, res, next) => {
 				.populate('author')
 				.exec();
 			if (!comment) {
-				return res.status(404).json('Comment not found, nothing to unlike');
+				return res.status(404).json('Comment not found');
 			}
 			return res.status(200).json(comment);
 		} else {
@@ -144,7 +142,7 @@ exports.change_like_status = async (req, res, next) => {
 				.populate('author')
 				.exec();
 			if (!comment) {
-				return res.status(404).json('Comment not found, nothing to unlike');
+				return res.status(404).json('Comment not found');
 			}
 			return res.status(200).json(comment);
 		}
