@@ -27,7 +27,7 @@ router.get(
 // Facebook log in callback;
 router.get(
 	'/log-in/facebook/callback',
-	user_controller.log_in_facebook_user_cb
+	user_controller.log_in_facebook_user_callback
 );
 
 // Log out user
