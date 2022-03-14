@@ -16,7 +16,19 @@ router.get('/', (req, res, next) => {
 router.post('/sign-up', user_controller.sign_up_user);
 
 // Log in user
-router.post('/log-in', user_controller.log_in_user);
+router.post('/log-in/email', user_controller.log_in_user);
+
+// Facebook log in
+router.get(
+	'/log-in/facebook',
+	passport.authenticate('facebook', { session: false })
+);
+
+// Facebook log in callback;
+router.get(
+	'/log-in/facebook/callback',
+	user_controller.log_in_facebook_user_cb
+);
 
 // Log out user
 router.get('/log-out', user_controller.log_out_user);
