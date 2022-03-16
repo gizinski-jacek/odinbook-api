@@ -21,7 +21,10 @@ router.post('/log-in/email', user_controller.log_in_user);
 // Facebook log in
 router.get(
 	'/log-in/facebook',
-	passport.authenticate('facebook', { session: false })
+	passport.authenticate('facebook', {
+		session: false,
+		scope: ['email'],
+	})
 );
 
 // Facebook log in callback;
