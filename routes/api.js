@@ -1,6 +1,31 @@
 const express = require('express');
 const router = express.Router();
 const passport = require('passport');
+const multer = require('multer');
+const path = require('path');
+
+const storage = multer.diskStorage({
+	destination: (req, file, cb) => {
+		cb(null, 'public/photos/');
+	},
+	filename: (req, file, cb) => {
+		cb(null, Date.now() + '__' + file.originalname);
+	},
+});
+
+const upload = multer({
+	storage: storage,
+	limits: { fileSize: 2000000 },
+	fileFilter: (req, file, cb) => {
+		const ext = path.extname(file.originalname);
+		if (ext !== '.png' && ext !== '.jpg' && ext !== '.jpeg') {
+			let err = new Error('Only images (png, jpg, jpeg) are allowed.');
+			err.status = 415;
+			return cb(err);
+		}
+		cb(null, true);
+	},
+});
 
 const user_controller = require('../controllers/userController');
 const post_controller = require('../controllers/postController');
@@ -88,7 +113,11 @@ router.get('/users/:userid/posts', user_controller.get_single_user_post_list);
 router.get('/users/:userid', user_controller.get_single_user);
 
 // Update user's data
-router.put('/users/:userid', user_controller.update_user_data);
+router.put(
+	'/users/:userid',
+	upload.single('profile_picture'),
+	user_controller.update_user_data
+);
 
 /////
 // Get current user's timeline posts
