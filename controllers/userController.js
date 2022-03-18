@@ -7,6 +7,7 @@ const passport = require('passport');
 const bcryptjs = require('bcryptjs');
 const mongoose = require('mongoose');
 const url = require('url');
+const fs = require('fs');
 
 exports.sign_up_user = [
 	body('first_name', 'First name is invalid')
@@ -438,17 +439,45 @@ exports.get_single_user = async (req, res, next) => {
 	}
 };
 
-exports.update_user_data = async (req, res, next) => {
-	try {
-		// if (!mongoose.Types.ObjectId.isValid(req.params.userid)) {
-		// 	return res.status(404).json('Invalid user Id');
-		// }
-		// const user = await User.findById(req.params.userid).exec();
-		// return res.status(200).json(user);
-	} catch (error) {
-		next(error);
-	}
-};
+exports.update_user_data = [
+	body('bio', 'Bio is invalid').trim().isLength({ max: 512 }).escape(),
+	async (req, res, next) => {
+		try {
+			if (!mongoose.Types.ObjectId.isValid(req.params.userid)) {
+				return res.status(404).json('Invalid user Id');
+			}
+			const errors = validationResult(req);
+			let picture;
+			if (req.file && errors.isEmpty()) {
+				picture = `photos/${req.file.filename}`;
+			}
+			if (!errors.isEmpty()) {
+				if (req.file) {
+					fs.unlink(`public/photos/${req.file.filename}`, (err) => {
+						if (err) {
+							debug(err);
+						}
+					});
+				}
+				return res.status(404).json(errors.array());
+			}
+			const user = await User.findByIdAndUpdate(
+				req.user._id,
+				{
+					bio: req.body.bio,
+					profile_picture: picture,
+				},
+				{ new: true }
+			).exec();
+			if (!user) {
+				return res.status(404).json('Error updating user');
+			}
+			return res.status(200).json(user);
+		} catch (error) {
+			next(error);
+		}
+	},
+];
 
 exports.search_people = async (req, res, next) => {
 	try {
