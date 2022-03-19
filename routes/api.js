@@ -119,12 +119,12 @@ router.put(
 	user_controller.update_user_data
 );
 
+// Delete user's picture
+router.delete('/users/picture/:pictureId', user_controller.delete_user_picture);
+
 /////
 // Get current user's timeline posts
-router.get(
-	'/posts/user-timeline-posts',
-	post_controller.get_user_timeline_posts
-);
+router.get('/posts/timeline', post_controller.get_user_timeline_posts);
 
 // Create new post
 router.post('/posts', post_controller.create_post);
