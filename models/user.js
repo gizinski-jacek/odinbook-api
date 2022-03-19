@@ -28,7 +28,6 @@ const UserSchema = new Schema({
 	outgoing_friend_requests: [{ type: Schema.Types.ObjectId, ref: 'User' }],
 	profile_picture: { type: String, maxlength: 512 },
 	bio: { type: String, maxlength: 512 },
-	hobbies: [{ type: String, minlength: 4, maxlength: 16 }],
 });
 
 module.exports = mongoose.model('User', UserSchema);
