@@ -449,14 +449,12 @@ exports.update_user_data = [
 			const errors = validationResult(req);
 			let picture;
 			if (req.file && errors.isEmpty()) {
-				picture = `photos/${req.file.filename}`;
+				picture = req.file.filename;
 			}
 			if (!errors.isEmpty()) {
 				if (req.file) {
-					fs.unlink(`public/photos/${req.file.filename}`, (err) => {
-						if (err) {
-							debug(err);
-						}
+					fs.unlink(`public/photos/${req.file.filename}`, (error) => {
+						if (error) throw error;
 					});
 				}
 				return res.status(404).json(errors.array());
@@ -478,6 +476,24 @@ exports.update_user_data = [
 		}
 	},
 ];
+
+exports.delete_user_picture = async (req, res, next) => {
+	try {
+		fs.unlink(`public/photos/${req.params.pictureId}`, (error) => {
+			if (error) throw error;
+		});
+		const user = await User.findByIdAndUpdate(
+			req.user._id,
+			{
+				profile_picture: '',
+			},
+			{ new: true }
+		).exec();
+		return res.status(200).json(user);
+	} catch (error) {
+		next(error);
+	}
+};
 
 exports.search_people = async (req, res, next) => {
 	try {
