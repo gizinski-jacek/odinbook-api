@@ -19,9 +19,9 @@ const upload = multer({
 	fileFilter: (req, file, cb) => {
 		const ext = path.extname(file.originalname);
 		if (ext !== '.png' && ext !== '.jpg' && ext !== '.jpeg') {
-			let err = new Error('Only images (png, jpg, jpeg) are allowed.');
-			err.status = 415;
-			return cb(err);
+			let error = new Error('Only images (png, jpg, jpeg) are allowed');
+			error.status = 415;
+			return cb(error);
 		}
 		cb(null, true);
 	},
@@ -112,12 +112,20 @@ router.get('/users/:userid/posts', user_controller.get_single_user_post_list);
 // Get user's data
 router.get('/users/:userid', user_controller.get_single_user);
 
+// Handle multer errors on user's data update
+router.put('/users/:userid', (req, res, next) => {
+	upload.single('profile_picture')(req, res, (error) => {
+		if (error instanceof multer.MulterError) {
+			return res.status(415).json(error);
+		} else if (error) {
+			return res.status(error.status).json(error.message);
+		}
+		next();
+	});
+});
+
 // Update user's data
-router.put(
-	'/users/:userid',
-	upload.single('profile_picture'),
-	user_controller.update_user_data
-);
+router.put('/users/:userid', user_controller.update_user_data);
 
 // Delete user's picture
 router.delete('/users/picture/:pictureId', user_controller.delete_user_picture);
