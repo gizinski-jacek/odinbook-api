@@ -120,7 +120,7 @@ exports.log_in_facebook_user_callback = async (req, res, next) => {
 				});
 				const data = { ...user._doc };
 				delete data.password;
-				return res.redirect(process.env.CLIENT_URL);
+				return res.redirect(process.env.CLIENT_URI);
 			} catch (error) {
 				next(error);
 			}
