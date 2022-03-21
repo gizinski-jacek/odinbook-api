@@ -7,6 +7,8 @@
 var app = require('../app');
 var debug = require('debug')('odinbook-api:server');
 var http = require('http');
+const { Server } = require('socket.io');
+const mongoose = require('mongoose');
 
 /**
  * Get port from environment and store in Express.
@@ -20,6 +22,75 @@ app.set('port', port);
  */
 
 var server = http.createServer(app);
+
+/**
+ * Attaching socket.io to the server instance.
+ */
+
+const Chat = require('../models/chat');
+const Message = require('../models/message');
+
+const socketio = new Server(server, {
+	cors: { origin: process.env.CLIENT_URL },
+});
+
+socketio.on('connection', (socket) => {
+	socket.on('open_chat', async (participants) => {
+		try {
+			const chat = await Chat.findOne({ participants: participants })
+				.sort({ createdAt: 'asc' })
+				.populate({
+					path: 'message_list',
+					populate: {
+						path: 'author',
+					},
+				})
+				.exec();
+			if (!chat) {
+				const newChat = new Chat({ participants });
+				await newChat.save();
+			}
+			socket.broadcast.emit('load_chat', chat);
+		} catch (error) {
+			socket.emit('chat_error', error);
+			console.log(error);
+		}
+	});
+
+	socket.on(
+		'send_message',
+		async ({ chatId, senderId, recipientId, string }) => {
+			try {
+				const newMessage = new Message({
+					chat_ref: chatId,
+					author: senderId,
+					text: string,
+				});
+				const message = await newMessage.save();
+				const chat = await Chat.findByIdAndUpdate(
+					chatId,
+					{
+						$addToSet: { message_list: message._id },
+					},
+					{ new: true }
+				)
+					// .sort({ 'message_list.createdAt': 'asc' })
+					.sort({ createdAt: 'asc' })
+					.populate({
+						path: 'message_list',
+						populate: {
+							path: 'author',
+						},
+					})
+					.exec();
+				socket.emit('receive_message', chat);
+			} catch (error) {
+				socket.emit('chat_error', error);
+				console.log(error);
+			}
+		}
+	);
+});
 
 /**
  * Listen on provided port, on all network interfaces.
