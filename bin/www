@@ -97,6 +97,25 @@ io.on('connection', (socket) => {
 		}
 	});
 
+	socket.on('dismiss_message', (userId, messageId) => {
+		const user_data = all_new_messages_data.find((data) => data._id == userId);
+		const updated_user_data = user_data.message_list.splice(
+			user_data.message_list.findIndex((message) => message._id == messageId),
+			1
+		);
+		all_new_messages_data = all_new_messages_data.map((data) => {
+			if (data._id == userId) {
+				return updated_user_data;
+			}
+			return data;
+		});
+	});
+
+	socket.on('open_messages_menu', (userId) => {
+		const user_data = all_new_messages_data.find((data) => data._id == userId);
+		socket.emit('load_new_messages', user_data.message_list);
+	});
+
 	socket.on('send_message', async (data, recipient) => {
 		try {
 			const newMessage = new Message({
