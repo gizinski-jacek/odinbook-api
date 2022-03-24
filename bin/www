@@ -36,7 +36,7 @@ const io = new Server(server, {
 
 const connected_client_list = [];
 
-const all_new_messages_data = [];
+let all_new_messages_data = [];
 
 io.on('connection', (socket) => {
 	socket.channelId = '';
@@ -150,7 +150,7 @@ io.on('connection', (socket) => {
 				});
 			} else {
 				all_new_messages_data.push({
-					userId: client_connected._id,
+					userId: recipientId,
 					message_list: [message],
 				});
 			}
