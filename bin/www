@@ -31,8 +31,12 @@ const Chat = require('../models/chat');
 const Message = require('../models/message');
 
 const io = new Server(server, {
-	cors: { origin: process.env.CLIENT_URL },
+	cors: { origin: process.env.CLIENT_URI },
 });
+
+const connected_client_list = [];
+
+const all_new_messages_data = [];
 
 io.on('connection', (socket) => {
 	socket.channelId = '';
