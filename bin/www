@@ -34,7 +34,7 @@ const io = new Server(server, {
 	cors: { origin: process.env.CLIENT_URI },
 });
 
-const connected_client_list = [];
+let connected_client_list = [];
 
 let all_new_messages_data = [];
 
@@ -47,9 +47,30 @@ io.on('connection', (socket) => {
 		}
 	});
 
+	socket.on('open_messages_menu', (userId) => {
+		let user_data = all_new_messages_data.find((data) => data.userId == userId);
+		if (user_data) {
+			socket.emit('load_new_messages', user_data.message_list);
+		}
+	});
+
+	socket.on('dismiss_message', (userId, messageId) => {
+		let user_data = all_new_messages_data.find((data) => data.userId == userId);
+		let messageIndex = user_data.message_list.findIndex(
+			(message) => message._id == messageId
+		);
+		all_new_messages_data = all_new_messages_data.map((data) => {
+			if (data.userId == userId) {
+				data.message_list.splice(messageIndex, 1);
+				return data;
+			}
+			return data;
+		});
+	});
+
 	socket.on('subscribe_chat', async (participants) => {
 		try {
-			const theChat = await Chat.findOne({ participants: participants })
+			let theChat = await Chat.findOne({ participants: participants })
 				.populate({
 					path: 'message_list',
 					populate: {
@@ -58,8 +79,8 @@ io.on('connection', (socket) => {
 				})
 				.exec();
 			if (!theChat) {
-				const newChat = new Chat({ participants });
-				const chat = await newChat.save();
+				let newChat = new Chat({ participants });
+				let chat = await newChat.save();
 				socket.channelId = chat._id.toString();
 			} else {
 				socket.channelId = theChat._id.toString();
@@ -73,7 +94,7 @@ io.on('connection', (socket) => {
 
 	socket.on('open_chat', async (participants) => {
 		try {
-			const theChat = await Chat.findOne({ participants: participants })
+			let theChat = await Chat.findOne({ participants: participants })
 				.populate({
 					path: 'message_list',
 					populate: {
@@ -82,12 +103,10 @@ io.on('connection', (socket) => {
 				})
 				.exec();
 			if (!theChat) {
-				const newChat = new Chat({ participants });
-				const chat = await newChat.save();
-				// socket.channelId = chat._id.toString();
+				let newChat = new Chat({ participants });
+				let chat = await newChat.save();
 				socket.emit('load_chat', chat);
 			} else {
-				// socket.channelId = theChat._id.toString();
 				socket.emit('load_chat', theChat);
 			}
 			socket.join(socket.channelId);
@@ -97,34 +116,15 @@ io.on('connection', (socket) => {
 		}
 	});
 
-	socket.on('dismiss_message', (userId, messageId) => {
-		const user_data = all_new_messages_data.find((data) => data._id == userId);
-		const updated_user_data = user_data.message_list.splice(
-			user_data.message_list.findIndex((message) => message._id == messageId),
-			1
-		);
-		all_new_messages_data = all_new_messages_data.map((data) => {
-			if (data._id == userId) {
-				return updated_user_data;
-			}
-			return data;
-		});
-	});
-
-	socket.on('open_messages_menu', (userId) => {
-		const user_data = all_new_messages_data.find((data) => data._id == userId);
-		socket.emit('load_new_messages', user_data.message_list);
-	});
-
 	socket.on('send_message', async (data, recipientId) => {
 		try {
-			const newMessage = new Message({
+			let newMessage = new Message({
 				chat_ref: data.chat_ref,
 				author: data.author,
 				text: data.text,
 			});
-			const message = await newMessage.save();
-			const chat = await Chat.findByIdAndUpdate(
+			let message = await newMessage.save();
+			let chat = await Chat.findByIdAndUpdate(
 				data.chat_ref,
 				{
 					$addToSet: { message_list: message._id },
@@ -138,9 +138,9 @@ io.on('connection', (socket) => {
 					},
 				})
 				.exec();
-			if (all_new_messages_data.find((data) => data._id == recipientId)) {
+			if (all_new_messages_data.find((data) => data.userId == recipientId)) {
 				all_new_messages_data = all_new_messages_data.map((data) => {
-					if (data._id == client_connected._id) {
+					if (data.userId == recipientId) {
 						return {
 							...data,
 							message_list: [...data.message_list, message],
@@ -154,7 +154,7 @@ io.on('connection', (socket) => {
 					message_list: [message],
 				});
 			}
-			const client_connected = connected_client_list.find(
+			let client_connected = connected_client_list.find(
 				(client) => client.userId == recipientId
 			);
 			if (client_connected) {
