@@ -41,7 +41,13 @@ const all_new_messages_data = [];
 io.on('connection', (socket) => {
 	socket.channelId = '';
 
-	socket.on('open_chat', async (participants) => {
+	socket.on('subscribe_alerts', (userId) => {
+		if (!connected_client_list.find((c) => c.userId == userId)) {
+			connected_client_list.push({ userId: userId, socketId: socket.id });
+		}
+	});
+
+	socket.on('subscribe_chat', async (participants) => {
 		try {
 			const theChat = await Chat.findOne({ participants: participants })
 				.populate({
@@ -55,9 +61,33 @@ io.on('connection', (socket) => {
 				const newChat = new Chat({ participants });
 				const chat = await newChat.save();
 				socket.channelId = chat._id.toString();
-				socket.emit('load_chat', chat);
 			} else {
 				socket.channelId = theChat._id.toString();
+			}
+			socket.join(socket.channelId);
+		} catch (error) {
+			socket.emit('oops', 'Chat error');
+			console.log(error);
+		}
+	});
+
+	socket.on('open_chat', async (participants) => {
+		try {
+			const theChat = await Chat.findOne({ participants: participants })
+				.populate({
+					path: 'message_list',
+					populate: {
+						path: 'author',
+					},
+				})
+				.exec();
+			if (!theChat) {
+				const newChat = new Chat({ participants });
+				const chat = await newChat.save();
+				// socket.channelId = chat._id.toString();
+				socket.emit('load_chat', chat);
+			} else {
+				// socket.channelId = theChat._id.toString();
 				socket.emit('load_chat', theChat);
 			}
 			socket.join(socket.channelId);
@@ -67,16 +97,16 @@ io.on('connection', (socket) => {
 		}
 	});
 
-	socket.on('send_message', async (data) => {
+	socket.on('send_message', async (data, recipient) => {
 		try {
 			const newMessage = new Message({
-				chat_ref: data.chatId,
-				author: data.userId,
-				text: data.string,
+				chat_ref: data.chat_ref,
+				author: data.author,
+				text: data.text,
 			});
 			const message = await newMessage.save();
 			const chat = await Chat.findByIdAndUpdate(
-				data.chatId,
+				data.chat_ref,
 				{
 					$addToSet: { message_list: message._id },
 				},
@@ -94,6 +124,13 @@ io.on('connection', (socket) => {
 			socket.emit('oops', 'Chat error');
 			console.log(error);
 		}
+	});
+
+	socket.on('disconnect', () => {
+		connected_client_list.splice(
+			connected_client_list.findIndex((client) => client.socketId == socket.id),
+			1
+		);
 	});
 });
 
