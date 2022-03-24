@@ -116,7 +116,7 @@ io.on('connection', (socket) => {
 		socket.emit('load_new_messages', user_data.message_list);
 	});
 
-	socket.on('send_message', async (data, recipient) => {
+	socket.on('send_message', async (data, recipientId) => {
 		try {
 			const newMessage = new Message({
 				chat_ref: data.chat_ref,
@@ -138,6 +138,29 @@ io.on('connection', (socket) => {
 					},
 				})
 				.exec();
+			if (all_new_messages_data.find((data) => data._id == recipientId)) {
+				all_new_messages_data = all_new_messages_data.map((data) => {
+					if (data._id == client_connected._id) {
+						return {
+							...data,
+							message_list: [...data.message_list, message],
+						};
+					}
+					return data;
+				});
+			} else {
+				all_new_messages_data.push({
+					userId: client_connected._id,
+					message_list: [message],
+				});
+			}
+			const client_connected = connected_client_list.find(
+				(client) => client.userId == recipientId
+			);
+			if (client_connected) {
+				io.to(client_connected.socketId).emit('message_alert');
+			}
+			socket.to(socket.channelId).emit('new_message');
 			io.to(socket.channelId).emit('receive_message', chat);
 		} catch (error) {
 			socket.emit('oops', 'Chat error');
