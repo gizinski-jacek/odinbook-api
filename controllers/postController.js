@@ -5,7 +5,7 @@ const { body, validationResult } = require('express-validator');
 const mongoose = require('mongoose');
 const url = require('url');
 
-exports.get_user_timeline_posts = async (req, res, next) => {
+exports.get_timeline_posts = async (req, res, next) => {
 	try {
 		const user = await User.findById(req.user._id).exec();
 		const timeline_post_list = await Post.find({
