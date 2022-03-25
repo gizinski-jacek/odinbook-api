@@ -30,6 +30,7 @@ const upload = multer({
 const user_controller = require('../controllers/userController');
 const post_controller = require('../controllers/postController');
 const comment_controller = require('../controllers/commentController');
+const message_controller = require('../controllers/messageController');
 
 // Redirect to all posts.
 router.get('/', (req, res, next) => {
@@ -180,5 +181,9 @@ router.get('/search/posts', post_controller.search_posts);
 
 // // Search messages
 // router.get('/messages/search', user_controller.search_messages);
+
+/////
+// Create chat message
+router.post('/chat/message', message_controller.create_message);
 
 module.exports = router;
