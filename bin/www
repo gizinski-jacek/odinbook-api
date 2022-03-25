@@ -27,7 +27,7 @@ var server = http.createServer(app);
  */
 
 const ioOptions = {
-	cors: { origin: process.env.CLIENT_URI },
+	cors: { origin: process.env.CLIENT_URI, credentials: true },
 };
 io.attach(server, ioOptions);
 
