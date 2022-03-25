@@ -8,6 +8,7 @@ const bcryptjs = require('bcryptjs');
 const mongoose = require('mongoose');
 const url = require('url');
 const fs = require('fs');
+const { socketEmits } = require('../socketio/socketio');
 
 exports.sign_up_user = [
 	body('first_name', 'First name is invalid')
@@ -118,8 +119,6 @@ exports.log_in_facebook_user_callback = async (req, res, next) => {
 					secure: false,
 					sameSite: 'strict',
 				});
-				const data = { ...user._doc };
-				delete data.password;
 				return res.redirect(process.env.CLIENT_URI);
 			} catch (error) {
 				next(error);
@@ -288,6 +287,7 @@ exports.send_friend_request = async (req, res, next) => {
 				{ new: true }
 			).exec(),
 		]);
+		socketEmits.notification_alert(req.body.userId);
 		return res.status(200).json(users_data);
 	} catch (error) {
 		next(error);
