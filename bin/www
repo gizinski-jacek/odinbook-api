@@ -7,8 +7,7 @@
 var app = require('../app');
 var debug = require('debug')('odinbook-api:server');
 var http = require('http');
-const { Server } = require('socket.io');
-const mongoose = require('mongoose');
+const { io } = require('../socketio/socketio');
 
 /**
  * Get port from environment and store in Express.
@@ -24,157 +23,13 @@ app.set('port', port);
 var server = http.createServer(app);
 
 /**
- * Attaching socket.io to the server instance.
+ * Attach socket.io to the server.
  */
 
-const Chat = require('../models/chat');
-const Message = require('../models/message');
-
-const io = new Server(server, {
+const ioOptions = {
 	cors: { origin: process.env.CLIENT_URI },
-});
-
-let connected_client_list = [];
-
-let all_new_messages_data = [];
-
-io.on('connection', (socket) => {
-	socket.channelId = '';
-
-	socket.on('subscribe_alerts', (userId) => {
-		if (!connected_client_list.find((c) => c.userId == userId)) {
-			connected_client_list.push({ userId: userId, socketId: socket.id });
-		}
-	});
-
-	socket.on('open_messages_menu', (userId) => {
-		let user_data = all_new_messages_data.find((data) => data.userId == userId);
-		if (user_data) {
-			socket.emit('load_new_messages', user_data.message_list);
-		}
-	});
-
-	socket.on('dismiss_message', (userId, messageId) => {
-		let user_data = all_new_messages_data.find((data) => data.userId == userId);
-		let messageIndex = user_data.message_list.findIndex(
-			(message) => message._id == messageId
-		);
-		all_new_messages_data = all_new_messages_data.map((data) => {
-			if (data.userId == userId) {
-				data.message_list.splice(messageIndex, 1);
-				return data;
-			}
-			return data;
-		});
-	});
-
-	socket.on('subscribe_chat', async (participants) => {
-		try {
-			let theChat = await Chat.findOne({ participants: participants })
-				.populate({
-					path: 'message_list',
-					populate: {
-						path: 'author',
-					},
-				})
-				.exec();
-			if (!theChat) {
-				let newChat = new Chat({ participants });
-				let chat = await newChat.save();
-				socket.channelId = chat._id.toString();
-			} else {
-				socket.channelId = theChat._id.toString();
-			}
-			socket.join(socket.channelId);
-		} catch (error) {
-			socket.emit('oops', 'Chat error');
-			console.log(error);
-		}
-	});
-
-	socket.on('open_chat', async (participants) => {
-		try {
-			let theChat = await Chat.findOne({ participants: participants })
-				.populate({
-					path: 'message_list',
-					populate: {
-						path: 'author',
-					},
-				})
-				.exec();
-			if (!theChat) {
-				let newChat = new Chat({ participants });
-				let chat = await newChat.save();
-				socket.emit('load_chat', chat);
-			} else {
-				socket.emit('load_chat', theChat);
-			}
-			socket.join(socket.channelId);
-		} catch (error) {
-			socket.emit('oops', 'Chat error');
-			console.log(error);
-		}
-	});
-
-	socket.on('send_message', async (data, recipientId) => {
-		try {
-			let newMessage = new Message({
-				chat_ref: data.chat_ref,
-				author: data.author,
-				text: data.text,
-			});
-			let message = await newMessage.save();
-			let chat = await Chat.findByIdAndUpdate(
-				data.chat_ref,
-				{
-					$addToSet: { message_list: message._id },
-				},
-				{ new: true }
-			)
-				.populate({
-					path: 'message_list',
-					populate: {
-						path: 'author',
-					},
-				})
-				.exec();
-			if (all_new_messages_data.find((data) => data.userId == recipientId)) {
-				all_new_messages_data = all_new_messages_data.map((data) => {
-					if (data.userId == recipientId) {
-						return {
-							...data,
-							message_list: [...data.message_list, message],
-						};
-					}
-					return data;
-				});
-			} else {
-				all_new_messages_data.push({
-					userId: recipientId,
-					message_list: [message],
-				});
-			}
-			let client_connected = connected_client_list.find(
-				(client) => client.userId == recipientId
-			);
-			if (client_connected) {
-				io.to(client_connected.socketId).emit('message_alert');
-			}
-			socket.to(socket.channelId).emit('new_message');
-			io.to(socket.channelId).emit('receive_message', chat);
-		} catch (error) {
-			socket.emit('oops', 'Chat error');
-			console.log(error);
-		}
-	});
-
-	socket.on('disconnect', () => {
-		connected_client_list.splice(
-			connected_client_list.findIndex((client) => client.socketId == socket.id),
-			1
-		);
-	});
-});
+};
+io.attach(server, ioOptions);
 
 /**
  * Listen on provided port, on all network interfaces.
