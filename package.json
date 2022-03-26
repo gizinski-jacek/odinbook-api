@@ -27,9 +27,9 @@
 		"passport": "^0.5.2",
 		"passport-facebook": "^3.0.0",
 		"passport-jwt": "^4.0.0",
+		"passport-jwt.socketio": "^0.1.1",
 		"passport-local": "^1.0.0",
-		"socket.io": "^4.4.1",
-		"socketio-jwt-auth": "^0.2.1"
+		"socket.io": "^4.4.1"
 	},
 	"engines": {
 		"node": "16.13.0"
