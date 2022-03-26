@@ -124,11 +124,11 @@ exports.change_like_status = async (req, res, next) => {
 		if (!mongoose.Types.ObjectId.isValid(req.body.postId)) {
 			return res.status(404).json('Invalid post Id');
 		}
-		const thePost = await Post.findById(req.body.postId).exec();
-		if (!thePost) {
+		const postExists = await Post.findById(req.body.postId).exec();
+		if (!postExists) {
 			return res.status(404).json('Post not found');
 		}
-		if (thePost.likes.includes(req.user._id)) {
+		if (postExists.likes.includes(req.user._id)) {
 			const post = await Post.findByIdAndUpdate(
 				req.body.postId,
 				{ $pull: { likes: req.user._id } },
