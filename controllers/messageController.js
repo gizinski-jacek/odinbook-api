@@ -4,7 +4,6 @@ const Message = require('../models/message');
 const { body, validationResult } = require('express-validator');
 const mongoose = require('mongoose');
 const url = require('url');
-const fs = require('fs');
 const { socketEmits } = require('../socketio/socketio');
 
 exports.get_chat_message_list = async (req, res, next) => {
@@ -122,6 +121,29 @@ exports.dismiss_message = async (req, res, next) => {
 			.populate('author')
 			.exec();
 		return res.status(200).json(new_message_list);
+	} catch (error) {
+		next(error);
+	}
+};
+
+exports.search_messages = async (req, res, next) => {
+	try {
+		const query = url.parse(req.url, true).query.q;
+		const search_message_list = await Message.find({
+			$and: [
+				{ participants: { $in: req.user._id } },
+				{
+					author: { $ne: req.user._id },
+				},
+				{
+					text: { $regex: query, $options: 'i' },
+				},
+			],
+		})
+			.sort({ createdAt: 'desc' })
+			.populate('author')
+			.exec();
+		return res.status(200).json(search_message_list);
 	} catch (error) {
 		next(error);
 	}
