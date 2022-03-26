@@ -443,7 +443,7 @@ exports.update_user_data = [
 	body('bio', 'Bio is invalid').trim().isLength({ max: 512 }).escape(),
 	async (req, res, next) => {
 		try {
-			if (!mongoose.Types.ObjectId.isValid(req.params.userid)) {
+			if (!mongoose.Types.ObjectId.isValid(req.user._id)) {
 				return res.status(404).json('Invalid user Id');
 			}
 			const errors = validationResult(req);
