@@ -114,7 +114,7 @@ router.get('/users/:userid/posts', user_controller.get_single_user_post_list);
 router.get('/users/:userid', user_controller.get_single_user);
 
 // Handle multer errors on user's data update
-router.put('/users/:userid', (req, res, next) => {
+router.put('/users', (req, res, next) => {
 	upload.single('profile_picture')(req, res, (error) => {
 		if (error instanceof multer.MulterError) {
 			return res.status(415).json(error);
@@ -126,7 +126,7 @@ router.put('/users/:userid', (req, res, next) => {
 });
 
 // Update user's data
-router.put('/users/:userid', user_controller.update_user_data);
+router.put('/users', user_controller.update_user_data);
 
 // Delete user's picture
 router.delete('/users/picture/:pictureId', user_controller.delete_user_picture);
@@ -183,7 +183,16 @@ router.get('/search/posts', post_controller.search_posts);
 // router.get('/messages/search', user_controller.search_messages);
 
 /////
+// Get chat messages
+router.get('/chats/messages', message_controller.get_chat_message_list);
+
 // Create chat message
-router.post('/chat/message', message_controller.create_message);
+router.post('/chats/messages', message_controller.create_chat_message);
+
+// Get new messages
+router.get('/chats/messages/new', message_controller.get_new_message_list);
+
+// Mark message as viewed
+router.put('/chats/messages/dismiss', message_controller.dismiss_message);
 
 module.exports = router;
