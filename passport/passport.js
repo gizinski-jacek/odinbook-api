@@ -77,7 +77,7 @@ passport.use(
 	)
 );
 
-const extractCookie = (req) => {
+const extractToken = (req) => {
 	let token = null;
 	if (req && req.cookies && req.cookies.token) {
 		token = req.cookies.token;
@@ -89,7 +89,7 @@ passport.use(
 	'jwt',
 	new JWTStrategy(
 		{
-			jwtFromRequest: extractCookie,
+			jwtFromRequest: extractToken,
 			secretOrKey: process.env.STRATEGY_SECRET,
 		},
 		(jwtPayload, done) => {
