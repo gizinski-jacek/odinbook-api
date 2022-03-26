@@ -170,19 +170,6 @@ router.put(
 );
 
 /////
-// Search people
-router.get('/search/users', user_controller.search_people);
-
-// Search user's friend list
-router.get('/search/:userid/friends', user_controller.search_user_friend_list);
-
-// Search posts
-router.get('/search/posts', post_controller.search_posts);
-
-// // Search messages
-// router.get('/messages/search', user_controller.search_messages);
-
-/////
 // Get chat messages
 router.get('/chats/messages', message_controller.get_chat_message_list);
 
@@ -194,5 +181,18 @@ router.get('/chats/messages/new', message_controller.get_new_message_list);
 
 // Mark message as viewed
 router.put('/chats/messages/dismiss', message_controller.dismiss_message);
+
+/////
+// Search people
+router.get('/search/users', user_controller.search_people);
+
+// Search user's friend list
+router.get('/search/:userid/friends', user_controller.search_user_friend_list);
+
+// Search posts
+router.get('/search/posts', post_controller.search_posts);
+
+// Search messages
+router.get('/search/messages', message_controller.search_messages);
 
 module.exports = router;
