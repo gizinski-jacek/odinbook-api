@@ -1,46 +1,104 @@
 const { Server } = require('socket.io');
+const passportJwtSocket = require('passport-jwt.socketio');
 const Chat = require('../models/chat');
-const Message = require('../models/message');
+const User = require('../models/user');
 
-let client_list = [];
-
-let all_new_messages_data = [];
+let notifications_clients = [];
+let chats_clients = [];
 
 const io = new Server();
+const notifications = io.of('/notifications');
+const chats = io.of('/chats');
 
-io.on('connection', (socket) => {
-	socket.chatId = '';
+const extractToken = (req) => {
+	let token = null;
+	if (req && req.headers && req.headers.cookie) {
+		token = req.headers.cookie.replace('token=', '');
+	}
+	return token;
+};
+
+[io, notifications, chats].forEach((ionamespace) =>
+	ionamespace.use(
+		passportJwtSocket.authorize(
+			{
+				jwtFromRequest: extractToken,
+				secretOrKey: process.env.STRATEGY_SECRET,
+			},
+			async (jwtPayload, done) => {
+				try {
+					const user = await User.findOne({ _id: jwtPayload._id }).exec();
+					if (!user) {
+						return done(null, false, { msg: 'User not found' });
+					}
+					return done(null, user, { msg: 'Success' });
+				} catch (error) {
+					done(error);
+				}
+			}
+		)
+	)
+);
+
+// io.on('connection', (socket) => {
+// 	if (
+// 		!all_clients.find((client) => client.userId == socket.handshake.user._id)
+// 	) {
+// 		all_clients.push({
+// 			userId: socket.handshake.user._id,
+// 			socket: socket,
+// 		});
+// 	}
+
+// 	socket.on('disconnect', () => {
+// 		all_clients.splice(
+// 			all_clients.findIndex((client) => client.socket.id == socket.id),
+// 			1
+// 		);
+// 	});
+// });
+
+notifications.on('connection', (socket) => {
+	if (
+		!notifications_clients.find(
+			(client) => client.userId == socket.handshake.user._id
+		)
+	) {
+		notifications_clients.push({
+			userId: socket.handshake.user._id,
+			socket: socket,
+		});
+	}
 
 	socket.on('subscribe_alerts', (userId) => {
-		if (!client_list.find((c) => c.userId == userId)) {
-			client_list.push({ userId: userId, socketId: socket.id });
+		if (!notifications_clients.find((c) => c.userId == userId)) {
+			notifications_clients.push({ userId: userId, socket: socket });
 		}
 	});
 
-	socket.on('open_messages_menu', (userId) => {
-		let user_data = all_new_messages_data.find((data) => data.userId == userId);
-		if (user_data) {
-			socket.emit('load_new_messages', user_data.message_list);
-		}
-	});
-
-	socket.on('dismiss_message', (userId, messageId) => {
-		let user_data = all_new_messages_data.find((data) => data.userId == userId);
-		let messageIndex = user_data.message_list.findIndex(
-			(message) => message._id == messageId
+	socket.on('disconnect', () => {
+		notifications_clients.splice(
+			notifications_clients.findIndex(
+				(client) => client.socket.id == socket.id
+			),
+			1
 		);
-		all_new_messages_data = all_new_messages_data.map((data) => {
-			if (data.userId == userId) {
-				data.message_list.splice(messageIndex, 1);
-				return data;
-			}
-			return data;
-		});
 	});
+});
+
+chats.on('connection', (socket) => {
+	if (
+		!chats_clients.find((client) => client.userId == socket.handshake.user._id)
+	) {
+		chats_clients.push({
+			userId: socket.handshake.user._id,
+			socket: socket,
+		});
+	}
 
 	socket.on('subscribe_chat', async (participants) => {
 		try {
-			let theChat = await Chat.findOne({ participants: participants })
+			const chatExists = await Chat.findOne({ participants: participants })
 				.populate({
 					path: 'message_list',
 					populate: {
@@ -48,90 +106,13 @@ io.on('connection', (socket) => {
 					},
 				})
 				.exec();
-			if (!theChat) {
-				let newChat = new Chat({ participants });
-				let chat = await newChat.save();
-				socket.chatId = chat._id.toString();
+			if (!chatExists) {
+				const newChat = new Chat({ participants: participants });
+				const chat = await newChat.save();
+				socket.join(chat._id.toString());
 			} else {
-				socket.chatId = theChat._id.toString();
+				socket.join(chatExists._id.toString());
 			}
-			socket.join(socket.chatId);
-		} catch (error) {
-			socket.emit('oops', 'Chat error');
-			console.log(error);
-		}
-	});
-
-	socket.on('open_chat', async (participants) => {
-		try {
-			let theChat = await Chat.findOne({ participants: participants })
-				.populate({
-					path: 'message_list',
-					populate: {
-						path: 'author',
-					},
-				})
-				.exec();
-			if (!theChat) {
-				let newChat = new Chat({ participants });
-				let chat = await newChat.save();
-				socket.emit('load_chat', chat);
-			} else {
-				socket.emit('load_chat', theChat);
-			}
-			socket.join(socket.chatId);
-		} catch (error) {
-			socket.emit('oops', 'Chat error');
-			console.log(error);
-		}
-	});
-
-	socket.on('send_message', async (data, recipientId) => {
-		try {
-			let newMessage = new Message({
-				chat_ref: data.chat_ref,
-				author: data.author,
-				text: data.text,
-			});
-			let message = await newMessage.save();
-			let chat = await Chat.findByIdAndUpdate(
-				data.chat_ref,
-				{
-					$addToSet: { message_list: message._id },
-				},
-				{ new: true }
-			)
-				.populate({
-					path: 'message_list',
-					populate: {
-						path: 'author',
-					},
-				})
-				.exec();
-			if (all_new_messages_data.find((data) => data.userId == recipientId)) {
-				all_new_messages_data = all_new_messages_data.map((data) => {
-					if (data.userId == recipientId) {
-						return {
-							...data,
-							message_list: [...data.message_list, message],
-						};
-					}
-					return data;
-				});
-			} else {
-				all_new_messages_data.push({
-					userId: recipientId,
-					message_list: [message],
-				});
-			}
-			let client_connected = client_list.find(
-				(client) => client.userId == recipientId
-			);
-			if (client_connected) {
-				io.to(client_connected.socketId).emit('message_alert');
-			}
-			socket.to(socket.chatId).emit('message_alert');
-			io.to(socket.chatId).emit('receive_message', chat);
 		} catch (error) {
 			socket.emit('oops', 'Chat error');
 			console.log(error);
@@ -139,8 +120,8 @@ io.on('connection', (socket) => {
 	});
 
 	socket.on('disconnect', () => {
-		client_list.splice(
-			client_list.findIndex((client) => client.socketId == socket.id),
+		chats_clients.splice(
+			chats_clients.findIndex((client) => client.socket.id == socket.id),
 			1
 		);
 	});
@@ -148,12 +129,25 @@ io.on('connection', (socket) => {
 
 const socketEmits = {
 	notification_alert: (userId) => {
-		const client = client_list.find((client) => client.userId == userId);
-		if (client) {
-			io.to(client.socketId).emit('notification_alert');
+		const notificationsClient = notifications_clients.find(
+			(client) => client.userId == userId
+		);
+		if (notificationsClient) {
+			notifications
+				.to(notificationsClient.socket.id)
+				.emit('notification_alert');
 		}
+	},
+	send_message: (recipientId, chatData) => {
+		const notificationsClient = notifications_clients.find(
+			(client) => client.userId == recipientId
+		);
+		if (notificationsClient) {
+			notifications.to(notificationsClient.socket.id).emit('message_alert');
+		}
+		chats.to(chatData._id.toString()).emit('receive_message', chatData);
 	},
 };
 
-exports.io = io;
 exports.socketEmits = socketEmits;
+exports.io = io;
