@@ -398,7 +398,10 @@ exports.get_single_user_friend_list = async (req, res, next) => {
 			return res.status(404).json('Invalid user Id');
 		}
 		const friend_list = await User.find({
-			friend_list: req.params.userid,
+			$and: [
+				{ _id: { $ne: req.user._id } },
+				{ friend_list: req.params.userid },
+			],
 		}).exec();
 		return res.status(200).json(friend_list);
 	} catch (error) {
@@ -499,10 +502,14 @@ exports.search_people = async (req, res, next) => {
 	try {
 		const query = url.parse(req.url, true).query.q;
 		const search_person_list = await User.find({
-			_id: { $ne: req.user._id },
-			$or: [
-				{ first_name: { $regex: query, $options: 'i' } },
-				{ last_name: { $regex: query, $options: 'i' } },
+			$and: [
+				{ _id: { $ne: req.user._id } },
+				{
+					$or: [
+						{ first_name: { $regex: query, $options: 'i' } },
+						{ last_name: { $regex: query, $options: 'i' } },
+					],
+				},
 			],
 		}).exec();
 		return res.status(200).json(search_person_list);
@@ -518,10 +525,15 @@ exports.search_user_friend_list = async (req, res, next) => {
 		}
 		const query = url.parse(req.url, true).query.q;
 		const search_friend_list = await User.find({
-			friend_list: { $in: req.params.userid },
-			$or: [
-				{ first_name: { $regex: query, $options: 'i' } },
-				{ last_name: { $regex: query, $options: 'i' } },
+			$and: [
+				{ _id: { $ne: req.user._id } },
+				{ friend_list: { $in: req.params.userid } },
+				{
+					$or: [
+						{ first_name: { $regex: query, $options: 'i' } },
+						{ last_name: { $regex: query, $options: 'i' } },
+					],
+				},
 			],
 		}).exec();
 		return res.status(200).json(search_friend_list);
