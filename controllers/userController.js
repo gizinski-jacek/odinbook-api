@@ -51,7 +51,7 @@ exports.sign_up_user = [
 			if (!user) {
 				return res.status(404).json('Error creating user');
 			}
-			return res.status(200).json('User created successfully');
+			return res.status(200).json({ success: true });
 		} catch (error) {
 			next(error);
 		}
@@ -169,7 +169,7 @@ exports.password_change = [
 			}
 			const hashedPassword = await bcryptjs.hash(req.body.password, 10);
 			await User.findByIdAndUpdate(user._id, { password: hashedPassword });
-			return res.status(200).json('Password changed successfully');
+			return res.status(200).json({ success: true });
 		} catch (error) {
 			next(error);
 		}
