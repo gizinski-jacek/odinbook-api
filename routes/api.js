@@ -179,8 +179,14 @@ router.post('/chats/messages', message_controller.create_chat_message);
 // Get new messages
 router.get('/chats/messages/new', message_controller.get_new_message_list);
 
-// Mark message as viewed
-router.put('/chats/messages/dismiss', message_controller.dismiss_message);
+// Mark message as read
+router.put('/chats/messages/mark', message_controller.mark_message_as_read);
+
+// Mark many messages as read
+router.put(
+	'/chats/messages/mark-many',
+	message_controller.mark_many_messages_as_read
+);
 
 /////
 // Search people
