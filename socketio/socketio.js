@@ -2,6 +2,7 @@ const { Server } = require('socket.io');
 const passportJwtSocket = require('passport-jwt.socketio');
 const Chat = require('../models/chat');
 const User = require('../models/user');
+const mongoose = require('mongoose');
 
 let notifications_clients = [];
 let chats_clients = [];
@@ -70,9 +71,16 @@ notifications.on('connection', (socket) => {
 		});
 	}
 
-	socket.on('subscribe_alerts', (userId) => {
-		if (!notifications_clients.find((c) => c.userId == userId)) {
-			notifications_clients.push({ userId: userId, socket: socket });
+	socket.on('subscribe_alerts', () => {
+		if (
+			!notifications_clients.find(
+				(client) => client.userId == socket.handshake.user._id
+			)
+		) {
+			notifications_clients.push({
+				userId: socket.handshake.user._id,
+				socket: socket,
+			});
 		}
 	});
 
@@ -96,8 +104,15 @@ chats.on('connection', (socket) => {
 		});
 	}
 
-	socket.on('subscribe_chat', async (participants) => {
+	socket.on('subscribe_chat', async (recipientId) => {
 		try {
+			const participants = [socket.handshake.user._id, recipientId].sort();
+			participants.forEach((participant) => {
+				if (!mongoose.Types.ObjectId.isValid(participant)) {
+					socket.emit('oops', 'Chat error');
+					return;
+				}
+			});
 			const chatExists = await Chat.findOne({ participants: participants })
 				.populate({
 					path: 'message_list',
