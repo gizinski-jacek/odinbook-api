@@ -7,7 +7,7 @@ const MessageSchema = new Schema(
 		chat_ref: { type: Schema.Types.ObjectId, ref: 'Chat', required: true },
 		author: { type: Schema.Types.ObjectId, ref: 'User', required: true },
 		text: { type: String, minlength: 1, maxlength: 64, required: true },
-		viewed: { type: Boolean, default: false },
+		read: { type: Boolean, default: false },
 	},
 	{ timestamps: true }
 );
