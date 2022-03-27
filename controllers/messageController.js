@@ -10,7 +10,7 @@ exports.get_chat_message_list = async (req, res, next) => {
 	try {
 		req.query.participants.forEach((participant) => {
 			if (!mongoose.Types.ObjectId.isValid(participant)) {
-				return res.status(404).json('Invalid post Id');
+				return res.status(404).json('Invalid user Id');
 			}
 		});
 		const chatExists = await Chat.findOne({
@@ -82,7 +82,7 @@ exports.get_new_message_list = async (req, res, next) => {
 					author: { $ne: req.user._id },
 				},
 				{
-					viewed: false,
+					read: false,
 				},
 			],
 		})
@@ -95,13 +95,13 @@ exports.get_new_message_list = async (req, res, next) => {
 	}
 };
 
-exports.dismiss_message = async (req, res, next) => {
+exports.mark_message_as_read = async (req, res, next) => {
 	try {
 		if (!mongoose.Types.ObjectId.isValid(req.body.messageId)) {
 			return res.status(404).json('Invalid message Id');
 		}
 		const message = await Message.findByIdAndUpdate(req.body.messageId, {
-			viewed: true,
+			read: true,
 		}).exec();
 		if (!message) {
 			return res.status(404).json('Message not found');
@@ -113,7 +113,7 @@ exports.dismiss_message = async (req, res, next) => {
 					author: { $ne: req.user._id },
 				},
 				{
-					viewed: false,
+					read: false,
 				},
 			],
 		})
@@ -121,6 +121,23 @@ exports.dismiss_message = async (req, res, next) => {
 			.populate('author')
 			.exec();
 		return res.status(200).json(new_message_list);
+	} catch (error) {
+		next(error);
+	}
+};
+
+exports.mark_many_messages_as_read = async (req, res, next) => {
+	try {
+		req.body.messageListToMark.forEach((participant) => {
+			if (!mongoose.Types.ObjectId.isValid(participant)) {
+				return res.status(404).json('Invalid message Id');
+			}
+		});
+		const test = await Message.updateMany(
+			{ _id: { $in: req.body.messageListIDs } },
+			{ read: true }
+		);
+		return res.status(200).json({ success: true });
 	} catch (error) {
 		next(error);
 	}
