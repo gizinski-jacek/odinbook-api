@@ -6,15 +6,14 @@ const mongoose = require('mongoose');
 const url = require('url');
 const { socketEmits } = require('../socketio/socketio');
 
-exports.get_chat_message_list = async (req, res, next) => {
+exports.get_chat_data = async (req, res, next) => {
 	try {
-		req.query.participants.forEach((participant) => {
-			if (!mongoose.Types.ObjectId.isValid(participant)) {
-				return res.status(404).json('Invalid user Id');
-			}
-		});
+		if (!mongoose.Types.ObjectId.isValid(req.query.recipientId)) {
+			return res.status(404).json('Invalid user Id');
+		}
+		const participantList = [req.user._id, req.query.recipientId].sort();
 		const chatExists = await Chat.findOne({
-			participants: req.query.participants,
+			participants: participantList,
 		})
 			.populate({
 				path: 'message_list',
@@ -22,7 +21,7 @@ exports.get_chat_message_list = async (req, res, next) => {
 			})
 			.exec();
 		if (!chatExists) {
-			const newChat = new Chat({ participants: participants });
+			const newChat = new Chat({ participants: participantList });
 			const chat = await newChat.save();
 			return res.status(200).json(chat);
 		}
