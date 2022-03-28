@@ -133,7 +133,7 @@ exports.mark_many_messages_as_read = async (req, res, next) => {
 				return res.status(404).json('Invalid message Id');
 			}
 		});
-		const test = await Message.updateMany(
+		await Message.updateMany(
 			{ _id: { $in: req.body.messageListIDs } },
 			{ read: true }
 		);
