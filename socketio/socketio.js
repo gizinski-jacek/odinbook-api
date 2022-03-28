@@ -56,7 +56,7 @@ notifications.on('connection', (socket) => {
 	socket.on('subscribe_alerts', () => {
 		if (
 			!notifications_clients.find(
-				(client) => client.userId == socket.handshake.user._id
+				(client) => client.userId == socket.handshake.user._id.toString()
 			)
 		) {
 			notifications_clients.push({
@@ -78,7 +78,9 @@ notifications.on('connection', (socket) => {
 
 chats.on('connection', (socket) => {
 	if (
-		!chats_clients.find((client) => client.userId == socket.handshake.user._id)
+		!chats_clients.find(
+			(client) => client.userId == socket.handshake.user._id.toString()
+		)
 	) {
 		chats_clients.push({
 			userId: socket.handshake.user._id,
@@ -95,14 +97,9 @@ chats.on('connection', (socket) => {
 					return;
 				}
 			});
-			const chatExists = await Chat.findOne({ participants: participants })
-				.populate({
-					path: 'message_list',
-					populate: {
-						path: 'author',
-					},
-				})
-				.exec();
+			const chatExists = await Chat.findOne({
+				participants: participants,
+			}).exec();
 			if (!chatExists) {
 				const newChat = new Chat({ participants: participants });
 				const chat = await newChat.save();
