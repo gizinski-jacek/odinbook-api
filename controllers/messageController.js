@@ -18,9 +18,7 @@ exports.get_chat_message_list = async (req, res, next) => {
 		})
 			.populate({
 				path: 'message_list',
-				populate: {
-					path: 'author',
-				},
+				populate: { path: 'author' },
 			})
 			.exec();
 		if (!chatExists) {
@@ -50,16 +48,12 @@ exports.create_chat_message = [
 			const theMessage = await newMessage.save();
 			const chatData = await Chat.findByIdAndUpdate(
 				req.body.chat_ref,
-				{
-					$addToSet: { message_list: theMessage._id },
-				},
+				{ $addToSet: { message_list: theMessage._id } },
 				{ new: true }
 			)
 				.populate({
 					path: 'message_list',
-					populate: {
-						path: 'author',
-					},
+					populate: { path: 'author' },
 				})
 				.exec();
 			if (!errors.isEmpty()) {
@@ -75,15 +69,15 @@ exports.create_chat_message = [
 
 exports.get_new_message_list = async (req, res, next) => {
 	try {
+		const chatList = await Chat.find({
+			participants: { $in: req.user._id },
+		}).exec();
+		const chatListIds = chatList.map((chat) => chat._id);
 		const new_message_list = await Message.find({
 			$and: [
-				{ participants: { $in: req.user._id } },
-				{
-					author: { $ne: req.user._id },
-				},
-				{
-					read: false,
-				},
+				{ chat_ref: { $in: chatListIds } },
+				{ author: { $ne: req.user._id } },
+				{ readBy: { $nin: req.user._id } },
 			],
 		})
 			.sort({ createdAt: 'desc' })
@@ -101,20 +95,20 @@ exports.mark_message_as_read = async (req, res, next) => {
 			return res.status(404).json('Invalid message Id');
 		}
 		const message = await Message.findByIdAndUpdate(req.body.messageId, {
-			read: true,
+			$addToSet: { readBy: req.user._id },
 		}).exec();
 		if (!message) {
 			return res.status(404).json('Message not found');
 		}
+		const chatList = await Chat.find({
+			participants: { $in: req.user._id },
+		}).exec();
+		const chatListIds = chatList.map((chat) => chat._id);
 		const new_message_list = await Message.find({
 			$and: [
-				{ participants: { $in: req.user._id } },
-				{
-					author: { $ne: req.user._id },
-				},
-				{
-					read: false,
-				},
+				{ chat_ref: { $in: chatListIds } },
+				{ author: { $ne: req.user._id } },
+				{ readBy: { $nin: req.user._id } },
 			],
 		})
 			.sort({ createdAt: 'desc' })
@@ -135,7 +129,7 @@ exports.mark_many_messages_as_read = async (req, res, next) => {
 		});
 		await Message.updateMany(
 			{ _id: { $in: req.body.messageList } },
-			{ read: true }
+			{ $addToSet: { readBy: req.user._id } }
 		);
 		return res.status(200).json({ success: true });
 	} catch (error) {
