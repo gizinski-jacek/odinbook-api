@@ -90,13 +90,11 @@ chats.on('connection', (socket) => {
 
 	socket.on('subscribe_chat', async (recipientId) => {
 		try {
+			if (!mongoose.Types.ObjectId.isValid(recipientId)) {
+				socket.emit('oops', 'Chat error');
+				return;
+			}
 			const participantList = [socket.handshake.user._id, recipientId].sort();
-			participantList.forEach((participant) => {
-				if (!mongoose.Types.ObjectId.isValid(participant)) {
-					socket.emit('oops', 'Chat error');
-					return;
-				}
-			});
 			const chatExists = await Chat.findOne({
 				participants: participantList,
 			}).exec();
