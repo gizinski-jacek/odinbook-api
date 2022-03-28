@@ -128,13 +128,13 @@ exports.mark_message_as_read = async (req, res, next) => {
 
 exports.mark_many_messages_as_read = async (req, res, next) => {
 	try {
-		req.body.messageListToMark.forEach((participant) => {
+		req.body.messageList.forEach((participant) => {
 			if (!mongoose.Types.ObjectId.isValid(participant)) {
 				return res.status(404).json('Invalid message Id');
 			}
 		});
 		await Message.updateMany(
-			{ _id: { $in: req.body.messageListIDs } },
+			{ _id: { $in: req.body.messageList } },
 			{ read: true }
 		);
 		return res.status(200).json({ success: true });
