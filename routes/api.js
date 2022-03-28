@@ -170,8 +170,8 @@ router.put(
 );
 
 /////
-// Get chat messages
-router.get('/chats/messages', message_controller.get_chat_message_list);
+// Get chat data
+router.get('/chats', message_controller.get_chat_data);
 
 // Create chat message
 router.post('/chats/messages', message_controller.create_chat_message);
