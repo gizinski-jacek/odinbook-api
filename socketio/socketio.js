@@ -19,7 +19,7 @@ const extractToken = (req) => {
 	return token;
 };
 
-[io, notifications, chats].forEach((ionamespace) =>
+io._nsps.forEach((ionamespace) => {
 	ionamespace.use(
 		passportJwtSocket.authorize(
 			{
@@ -38,26 +38,8 @@ const extractToken = (req) => {
 				}
 			}
 		)
-	)
-);
-
-// io.on('connection', (socket) => {
-// 	if (
-// 		!all_clients.find((client) => client.userId == socket.handshake.user._id)
-// 	) {
-// 		all_clients.push({
-// 			userId: socket.handshake.user._id,
-// 			socket: socket,
-// 		});
-// 	}
-
-// 	socket.on('disconnect', () => {
-// 		all_clients.splice(
-// 			all_clients.findIndex((client) => client.socket.id == socket.id),
-// 			1
-// 		);
-// 	});
-// });
+	);
+});
 
 notifications.on('connection', (socket) => {
 	if (
