@@ -192,9 +192,7 @@ exports.get_people_list = async (req, res, next) => {
 	try {
 		const user = await User.findById(req.user._id).exec();
 		const user_list = await User.find({
-			_id: {
-				$nin: [user._id, ...user.friend_list],
-			},
+			_id: { $nin: [user._id, ...user.friend_list] },
 		}).exec();
 		return res.status(200).json(user_list);
 	} catch (error) {
@@ -212,16 +210,12 @@ exports.change_block_status = async (req, res, next) => {
 			const users_data = await Promise.all([
 				User.findByIdAndUpdate(
 					req.body.userId,
-					{
-						$pull: { blocked_by_other_list: req.user._id },
-					},
+					{ $pull: { blocked_by_other_list: req.user._id } },
 					{ new: true }
 				).exec(),
 				User.findByIdAndUpdate(
 					req.user._id,
-					{
-						$pull: { blocked_user_list: req.body.userId },
-					},
+					{ $pull: { blocked_user_list: req.body.userId } },
 					{ new: true }
 				).exec(),
 			]);
@@ -274,16 +268,12 @@ exports.send_friend_request = async (req, res, next) => {
 		const users_data = await Promise.all([
 			User.findByIdAndUpdate(
 				req.body.userId,
-				{
-					$addToSet: { incoming_friend_requests: req.user._id },
-				},
+				{ $addToSet: { incoming_friend_requests: req.user._id } },
 				{ new: true }
 			).exec(),
 			User.findByIdAndUpdate(
 				req.user._id,
-				{
-					$addToSet: { outgoing_friend_requests: req.body.userId },
-				},
+				{ $addToSet: { outgoing_friend_requests: req.body.userId } },
 				{ new: true }
 			).exec(),
 		]);
@@ -370,16 +360,12 @@ exports.remove_friend = async (req, res, next) => {
 		const users_data = await Promise.all([
 			User.findByIdAndUpdate(
 				req.body.userId,
-				{
-					$pull: { friend_list: req.user._id },
-				},
+				{ $pull: { friend_list: req.user._id } },
 				{ new: true }
 			).exec(),
 			User.findByIdAndUpdate(
 				req.user._id,
-				{
-					$pull: { friend_list: req.body.userId },
-				},
+				{ $pull: { friend_list: req.body.userId } },
 				{ new: true }
 			)
 				.populate('incoming_friend_requests')
@@ -487,9 +473,7 @@ exports.delete_user_picture = async (req, res, next) => {
 		});
 		const user = await User.findByIdAndUpdate(
 			req.user._id,
-			{
-				profile_picture: '',
-			},
+			{ profile_picture: '' },
 			{ new: true }
 		).exec();
 		return res.status(200).json(user);

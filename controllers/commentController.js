@@ -29,9 +29,7 @@ exports.create_comment = [
 			}
 			const post = await Post.findByIdAndUpdate(
 				req.params.postid,
-				{
-					$addToSet: { comments: comment._id },
-				},
+				{ $addToSet: { comments: comment._id } },
 				{ new: true }
 			)
 				.populate('author')
