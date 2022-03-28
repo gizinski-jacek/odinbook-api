@@ -90,18 +90,18 @@ chats.on('connection', (socket) => {
 
 	socket.on('subscribe_chat', async (recipientId) => {
 		try {
-			const participants = [socket.handshake.user._id, recipientId].sort();
-			participants.forEach((participant) => {
+			const participantList = [socket.handshake.user._id, recipientId].sort();
+			participantList.forEach((participant) => {
 				if (!mongoose.Types.ObjectId.isValid(participant)) {
 					socket.emit('oops', 'Chat error');
 					return;
 				}
 			});
 			const chatExists = await Chat.findOne({
-				participants: participants,
+				participants: participantList,
 			}).exec();
 			if (!chatExists) {
-				const newChat = new Chat({ participants: participants });
+				const newChat = new Chat({ participants: participantList });
 				const chat = await newChat.save();
 				socket.join(chat._id.toString());
 			} else {
