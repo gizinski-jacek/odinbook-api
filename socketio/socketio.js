@@ -131,11 +131,18 @@ const socketEmits = {
 		}
 	},
 	send_message: (recipientId, chatData) => {
-		const notificationsClient = notifications_clients.find(
+		const chatClient = chats_clients.find(
 			(client) => client.userId == recipientId
 		);
-		if (notificationsClient) {
-			notifications.to(notificationsClient.socket.id).emit('message_alert');
+		if (!chatClient) {
+			const notificationsClient = notifications_clients.find(
+				(client) => client.userId == recipientId
+			);
+			if (notificationsClient) {
+				notifications.to(notificationsClient.socket.id).emit('message_alert');
+			}
+		} else {
+			chats.to(chatClient.socket.id).emit('receive_message', chatData);
 		}
 		chats.to(chatData._id.toString()).emit('receive_message', chatData);
 	},
