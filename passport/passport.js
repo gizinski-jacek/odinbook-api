@@ -70,7 +70,6 @@ passport.use(
 				}
 				return done(null, userExists);
 			} catch (error) {
-				console.log(error);
 				done(error);
 			}
 		}

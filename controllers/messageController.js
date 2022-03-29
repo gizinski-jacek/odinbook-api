@@ -27,7 +27,7 @@ exports.get_chat_data = async (req, res, next) => {
 		}
 		return res.status(200).json(chatExists);
 	} catch (error) {
-		console.log(error);
+		next(error);
 	}
 };
 

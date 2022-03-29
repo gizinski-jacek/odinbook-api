@@ -107,7 +107,6 @@ chats.on('connection', (socket) => {
 			}
 		} catch (error) {
 			socket.emit('oops', 'Chat error');
-			console.log(error);
 		}
 	});
 
