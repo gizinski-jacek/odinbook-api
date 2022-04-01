@@ -32,7 +32,7 @@ io._nsps.forEach((ionamespace) => {
 					if (!user) {
 						return done(null, false, { msg: 'User not found' });
 					}
-					return done(null, user, { msg: 'Success' });
+					return done(null, user, { success: true });
 				} catch (error) {
 					done(error);
 				}
