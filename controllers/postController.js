@@ -4,6 +4,7 @@ const User = require('../models/user');
 const { body, validationResult } = require('express-validator');
 const mongoose = require('mongoose');
 const url = require('url');
+const fs = require('fs');
 
 exports.get_timeline_posts = async (req, res, next) => {
 	try {
@@ -27,20 +28,30 @@ exports.get_timeline_posts = async (req, res, next) => {
 };
 
 exports.create_post = [
-	body('text', 'Text is invalid')
+	body('text', 'Text format is incorrect')
 		.trim()
 		.isLength({ min: 1, max: 512 })
 		.escape(),
 	async (req, res, next) => {
 		try {
 			const errors = validationResult(req);
+			if (!errors.isEmpty()) {
+				if (req.file) {
+					fs.unlink(`public/photos/posts/${req.file.filename}`, (error) => {
+						if (error) throw error;
+					});
+				}
+				return res.status(404).json(errors.array());
+			}
+			let picture_name;
+			if (req.file) {
+				picture_name = req.file.filename;
+			}
 			const newPost = new Post({
 				author: req.user._id,
 				text: req.body.text,
+				picture: picture_name,
 			});
-			if (!errors.isEmpty()) {
-				return res.status(404).json(errors.array());
-			}
 			const post = await newPost.save();
 			if (!post) {
 				return res.status(404).json('Error creating post');
@@ -61,7 +72,7 @@ exports.create_post = [
 ];
 
 exports.update_post = [
-	body('text', 'Text is invalid')
+	body('text', 'Text format is incorrect')
 		.trim()
 		.isLength({ min: 1, max: 512 })
 		.escape(),
@@ -70,18 +81,29 @@ exports.update_post = [
 			if (!mongoose.Types.ObjectId.isValid(req.body._id)) {
 				return res.status(404).json('Invalid post Id');
 			}
-			const thePost = await Post.findById(req.body._id).exec();
 			const errors = validationResult(req);
+			if (!errors.isEmpty()) {
+				if (req.file) {
+					fs.unlink(`public/photos/posts/${req.file.filename}`, (error) => {
+						if (error) throw error;
+					});
+				}
+				return res.status(404).json(errors.array());
+			}
+			let picture_name;
+			if (req.file) {
+				picture_name = req.file.filename;
+			}
+			const thePost = await Post.findById(req.body._id).exec();
 			const updatedPost = new Post({
 				_id: thePost._id,
 				author: thePost.author,
 				text: req.body.text,
+				picture: picture_name,
 				comments: thePost.comments,
 				likes: thePost.likes,
 			});
-			if (!errors.isEmpty()) {
-				return res.status(404).json(errors.array());
-			}
+
 			const post = await Post.findByIdAndUpdate(thePost._id, updatedPost, {
 				timestamps: true,
 				new: true,
@@ -94,6 +116,11 @@ exports.update_post = [
 					},
 				})
 				.exec();
+			if (thePost.picture) {
+				fs.unlink(`public/photos/posts/${thePost.picture}`, (error) => {
+					if (error) throw error;
+				});
+			}
 			if (!post) {
 				return res.status(404).json('Post not found');
 			}
@@ -110,6 +137,11 @@ exports.delete_post = async (req, res, next) => {
 			return res.status(404).json('Invalid post Id');
 		}
 		const post = await Post.findByIdAndDelete(req.params.postid).exec();
+		if (post.picture) {
+			fs.unlink(`public/photos/posts/${post.picture}`, (error) => {
+				if (error) throw error;
+			});
+		}
 		if (!post) {
 			return res.status(404).json('Post not found');
 		}
