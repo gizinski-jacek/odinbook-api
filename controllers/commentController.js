@@ -5,7 +5,7 @@ const { body, validationResult } = require('express-validator');
 const mongoose = require('mongoose');
 
 exports.create_comment = [
-	body('text', 'Text is invalid')
+	body('text', 'Text format is incorrect')
 		.trim()
 		.isLength({ min: 1, max: 512 })
 		.escape(),
@@ -15,14 +15,14 @@ exports.create_comment = [
 				return res.status(404).json('Invalid post Id');
 			}
 			const errors = validationResult(req);
+			if (!errors.isEmpty()) {
+				return res.status(404).json(errors.array());
+			}
 			const newComment = new Comment({
 				author: req.user._id,
 				post_ref: req.params.postid,
 				text: req.body.text,
 			});
-			if (!errors.isEmpty()) {
-				return res.status(404).json(errors.array());
-			}
 			const comment = await newComment.save();
 			if (!comment) {
 				return res.status(404).json('Error creating comment');
@@ -43,7 +43,7 @@ exports.create_comment = [
 ];
 
 exports.update_comment = [
-	body('text', 'Text is invalid')
+	body('text', 'Text format is incorrect')
 		.trim()
 		.isLength({ min: 1, max: 512 })
 		.escape(),
@@ -55,8 +55,11 @@ exports.update_comment = [
 			if (!mongoose.Types.ObjectId.isValid(req.body._id)) {
 				return res.status(404).json('Invalid comment Id');
 			}
-			const theComment = await Comment.findById(req.body._id).exec();
 			const errors = validationResult(req);
+			if (!errors.isEmpty()) {
+				return res.status(404).json(errors.array());
+			}
+			const theComment = await Comment.findById(req.body._id).exec();
 			const updatedComment = new Comment({
 				_id: theComment._id,
 				author: theComment.author,
@@ -64,9 +67,6 @@ exports.update_comment = [
 				text: req.body.text,
 				likes: theComment.likes,
 			});
-			if (!errors.isEmpty()) {
-				return res.status(404).json(errors.array());
-			}
 			const comment = await Comment.findByIdAndUpdate(
 				theComment._id,
 				updatedComment,
