@@ -11,15 +11,15 @@ const fs = require('fs');
 const { socketEmits } = require('../socketio/socketio');
 
 exports.sign_up_user = [
-	body('first_name', 'First name is invalid')
+	body('first_name', 'First name format is incorrect')
 		.trim()
 		.isLength({ min: 4, max: 32 })
 		.escape(),
-	body('last_name', 'Last name is invalid')
+	body('last_name', 'Last name format is incorrect')
 		.trim()
 		.isLength({ min: 4, max: 32 })
 		.escape(),
-	body('email', 'Email is invalid')
+	body('email', 'Email format is incorrect')
 		.trim()
 		.isEmail()
 		.custom(async (value) => {
@@ -30,21 +30,21 @@ exports.sign_up_user = [
 			return true;
 		})
 		.escape(),
-	body('password', 'Password is invalid')
+	body('password', 'Password format is incorrect')
 		.trim()
 		.isLength({ min: 8, max: 64 })
 		.escape(),
 	async (req, res, next) => {
 		try {
 			const errors = validationResult(req);
+			if (!errors.isEmpty()) {
+				return res.status(404).json(errors.array());
+			}
 			const newUser = new User({
 				first_name: req.body.first_name,
 				last_name: req.body.last_name,
 				email: req.body.email,
 			});
-			if (!errors.isEmpty()) {
-				return res.status(404).json(errors.array());
-			}
 			const hashedPassword = await bcryptjs.hash(req.body.password, 10);
 			newUser.password = hashedPassword;
 			const user = await newUser.save();
@@ -58,40 +58,51 @@ exports.sign_up_user = [
 	},
 ];
 
-exports.log_in_user = async (req, res, next) => {
-	passport.authenticate(
-		'login',
-		{ session: false },
-		async (error, user, msg) => {
-			if (error) {
-				return next(error);
-			}
-			try {
-				if (!user) {
-					return res.status(401).json(msg);
-				}
-				const payload = {
-					_id: user._id,
-					first_name: user.first_name,
-					last_name: user.last_name,
-				};
-				const token = jwt.sign(payload, process.env.STRATEGY_SECRET, {
-					expiresIn: '150m',
-				});
-				res.cookie('token', token, {
-					httpOnly: true,
-					secure: false,
-					sameSite: 'strict',
-				});
-				const data = { ...user._doc };
-				delete data.password;
-				return res.status(200).json(data);
-			} catch (error) {
-				next(error);
-			}
+exports.log_in_user = [
+	body('email', 'Email format is incorrect').trim().isEmail().escape(),
+	body('password', 'Password format is incorrect')
+		.trim()
+		.isLength({ min: 8, max: 64 })
+		.escape(),
+	async (req, res, next) => {
+		const errors = validationResult(req);
+		if (!errors.isEmpty()) {
+			return res.status(404).json(errors.array());
 		}
-	)(req, res, next);
-};
+		passport.authenticate(
+			'login',
+			{ session: false },
+			async (error, user, msg) => {
+				if (error) {
+					return next(error);
+				}
+				try {
+					if (!user) {
+						return res.status(401).json(msg);
+					}
+					const payload = {
+						_id: user._id,
+						first_name: user.first_name,
+						last_name: user.last_name,
+					};
+					const token = jwt.sign(payload, process.env.STRATEGY_SECRET, {
+						expiresIn: '150m',
+					});
+					res.cookie('token', token, {
+						httpOnly: true,
+						secure: false,
+						sameSite: 'strict',
+					});
+					const data = { ...user._doc };
+					delete data.password;
+					return res.status(200).json(data);
+				} catch (error) {
+					next(error);
+				}
+			}
+		)(req, res, next);
+	},
+];
 
 exports.log_in_facebook_user_callback = async (req, res, next) => {
 	passport.authenticate(
@@ -150,7 +161,7 @@ exports.verify_user_token = async (req, res, next) => {
 };
 
 exports.password_change = [
-	body('password', 'Password is invalid')
+	body('password', 'Password format is incorrect')
 		.trim()
 		.isLength({ min: 8, max: 64 })
 		.escape(),
@@ -429,30 +440,27 @@ exports.get_single_user = async (req, res, next) => {
 };
 
 exports.update_user_data = [
-	body('bio', 'Bio is invalid').trim().isLength({ max: 512 }).escape(),
+	body('bio', 'Bio format is incorrect').trim().isLength({ max: 512 }).escape(),
 	async (req, res, next) => {
 		try {
-			if (!mongoose.Types.ObjectId.isValid(req.user._id)) {
-				return res.status(404).json('Invalid user Id');
-			}
 			const errors = validationResult(req);
-			let picture;
-			if (req.file && errors.isEmpty()) {
-				picture = req.file.filename;
-			}
 			if (!errors.isEmpty()) {
 				if (req.file) {
-					fs.unlink(`public/photos/${req.file.filename}`, (error) => {
+					fs.unlink(`public/photos/users/${req.file.filename}`, (error) => {
 						if (error) throw error;
 					});
 				}
 				return res.status(404).json(errors.array());
 			}
+			let picture_name;
+			if (req.file) {
+				picture_name = req.file.filename;
+			}
 			const user = await User.findByIdAndUpdate(
 				req.user._id,
 				{
 					bio: req.body.bio,
-					profile_picture: picture,
+					profile_picture: picture_name,
 				},
 				{ new: true }
 			).exec();
@@ -468,7 +476,7 @@ exports.update_user_data = [
 
 exports.delete_user_picture = async (req, res, next) => {
 	try {
-		fs.unlink(`public/photos/${req.params.pictureId}`, (error) => {
+		fs.unlink(`public/photos/users/${req.params.pictureId}`, (error) => {
 			if (error) throw error;
 		});
 		const user = await User.findByIdAndUpdate(
