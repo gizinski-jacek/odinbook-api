@@ -32,13 +32,19 @@ exports.get_chat_data = async (req, res, next) => {
 };
 
 exports.create_chat_message = [
-	body('text', 'Text is invalid').trim().isLength({ min: 1, max: 64 }).escape(),
+	body('text', 'Text format is incorrect')
+		.trim()
+		.isLength({ min: 1, max: 64 })
+		.escape(),
 	async (req, res, next) => {
 		try {
 			if (!mongoose.Types.ObjectId.isValid(req.body.chat_ref)) {
 				return res.status(404).json('Invalid post Id');
 			}
 			const errors = validationResult(req);
+			if (!errors.isEmpty()) {
+				return res.status(404).json(errors.array());
+			}
 			const newMessage = new Message({
 				chat_ref: req.body.chat_ref,
 				author: req.user._id,
@@ -55,11 +61,8 @@ exports.create_chat_message = [
 					populate: { path: 'author' },
 				})
 				.exec();
-			if (!errors.isEmpty()) {
-				return res.status(404).json(errors.array());
-			}
 			socketEmits.send_message(req.body.recipient, chatData);
-			return res.status(200).json('Chat message sent');
+			return res.status(200).json({ success: true });
 		} catch (error) {
 			next(error);
 		}
