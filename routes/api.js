@@ -2,30 +2,7 @@ const express = require('express');
 const router = express.Router();
 const passport = require('passport');
 const multer = require('multer');
-const path = require('path');
-
-const storage = multer.diskStorage({
-	destination: (req, file, cb) => {
-		cb(null, 'public/photos/');
-	},
-	filename: (req, file, cb) => {
-		cb(null, Date.now() + '__' + file.originalname);
-	},
-});
-
-const upload = multer({
-	storage: storage,
-	limits: { fileSize: 2000000 },
-	fileFilter: (req, file, cb) => {
-		const ext = path.extname(file.originalname);
-		if (ext !== '.png' && ext !== '.jpg' && ext !== '.jpeg') {
-			let error = new Error('Only images (png, jpg, jpeg) are allowed');
-			error.status = 415;
-			return cb(error);
-		}
-		cb(null, true);
-	},
-});
+const { uploadUserFile, uploadPostFile } = require('../multer/multer');
 
 const user_controller = require('../controllers/userController');
 const post_controller = require('../controllers/postController');
@@ -113,9 +90,9 @@ router.get('/users/:userid/posts', user_controller.get_single_user_post_list);
 // Get user's data
 router.get('/users/:userid', user_controller.get_single_user);
 
-// Handle multer errors on user's data update
+// Handle picture multer errors on user's profile update
 router.put('/users', (req, res, next) => {
-	upload.single('profile_picture')(req, res, (error) => {
+	uploadUserFile.single('profile_picture')(req, res, (error) => {
 		if (error instanceof multer.MulterError) {
 			return res.status(415).json(error);
 		} else if (error) {
@@ -135,8 +112,32 @@ router.delete('/users/picture/:pictureId', user_controller.delete_user_picture);
 // Get current user's timeline posts
 router.get('/posts/timeline', post_controller.get_timeline_posts);
 
+// Handle picture multer errors on post creation
+router.post('/posts', (req, res, next) => {
+	uploadPostFile.single('post_picture')(req, res, (error) => {
+		if (error instanceof multer.MulterError) {
+			return res.status(415).json(error);
+		} else if (error) {
+			return res.status(error.status).json(error.message);
+		}
+		next();
+	});
+});
+
 // Create new post
 router.post('/posts', post_controller.create_post);
+
+// Handle picture multer errors on post update
+router.put('/posts/:postid', (req, res, next) => {
+	uploadPostFile.single('post_picture')(req, res, (error) => {
+		if (error instanceof multer.MulterError) {
+			return res.status(415).json(error);
+		} else if (error) {
+			return res.status(error.status).json(error.message);
+		}
+		next();
+	});
+});
 
 // Update a post
 router.put('/posts/:postid', post_controller.update_post);
