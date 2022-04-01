@@ -16,13 +16,15 @@ passport.use(
 					.select('+password')
 					.exec();
 				if (!user) {
-					return done(null, false, { msg: 'Incorrect email' });
+					return done(null, false, {
+						msg: 'Account with entered email not found',
+					});
 				}
 				const match = await bcryptjs.compare(password, user.password);
 				if (!match) {
-					return done(null, false, { msg: 'Incorrect password' });
+					return done(null, false, { msg: 'Entered password is incorrect' });
 				}
-				return done(null, user, { msg: 'Logged in successfully' });
+				return done(null, user, { success: true });
 			} catch (error) {
 				done(error);
 			}
