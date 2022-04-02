@@ -86,7 +86,7 @@ exports.log_in_user = [
 						last_name: user.last_name,
 					};
 					const token = jwt.sign(payload, process.env.STRATEGY_SECRET, {
-						expiresIn: '150m',
+						expiresIn: '30m',
 					});
 					res.cookie('token', token, {
 						httpOnly: true,
@@ -123,7 +123,7 @@ exports.log_in_facebook_user_callback = async (req, res, next) => {
 					last_name: user.last_name,
 				};
 				const token = jwt.sign(payload, process.env.STRATEGY_SECRET, {
-					expiresIn: '150m',
+					expiresIn: '30m',
 				});
 				res.cookie('token', token, {
 					httpOnly: true,
