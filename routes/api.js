@@ -15,11 +15,14 @@ router.get('/', (req, res, next) => {
 });
 
 /////
+// Create and login to test user
+router.get('/test-user', user_controller.test_user);
+
 // Sign up user
 router.post('/sign-up', user_controller.sign_up_user);
 
 // Log in user
-router.post('/log-in/email', user_controller.log_in_user);
+router.post('/log-in/email', user_controller.log_in_user_with_email);
 
 // Facebook log in
 router.get(
