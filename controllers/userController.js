@@ -9,15 +9,84 @@ const mongoose = require('mongoose');
 const url = require('url');
 const fs = require('fs');
 const { socketEmits } = require('../socketio/socketio');
+const { faker } = require('@faker-js/faker');
+
+exports.test_user = async (req, res, next) => {
+	try {
+		const testUser = new User({
+			first_name: faker.name.firstName(),
+			last_name: faker.name.lastName(),
+			email: faker.internet.email(),
+		});
+		const randomPassword = faker.internet.password();
+		const hashedPassword = await bcryptjs.hash(randomPassword, 5);
+		testUser.password = hashedPassword;
+		req.body.email = testUser.email;
+		req.body.password = randomPassword;
+		const savedTestUser = await testUser.save();
+		if (!savedTestUser) {
+			return res.status(404).json('Error creating user');
+		}
+		const userCount = await User.find({}).count().exec();
+		for (let i = 0; i < 10; i++) {
+			let random = Math.random();
+			let user = await User.findOne({})
+				.skip(Math.floor(random * userCount))
+				.exec();
+			if (user._id == savedTestUser._id.toString()) {
+				continue;
+			}
+			if (random >= 0.4) {
+				await User.findByIdAndUpdate(savedTestUser._id, {
+					$addToSet: { friend_list: user._id },
+				}).exec();
+			} else if (random <= 0.1) {
+				await User.findByIdAndUpdate(user._id, {
+					$addToSet: { blocked_by_other_list: user._id },
+				}).exec();
+			} else {
+				await User.findByIdAndUpdate(savedTestUser._id, {
+					$addToSet: { incoming_friend_requests: user._id },
+				}).exec();
+			}
+		}
+		passport.authenticate('login', { session: false }, (error, user, msg) => {
+			if (error) {
+				return next(error);
+			}
+			if (!user) {
+				return res.status(401).json(msg);
+			}
+			const payload = {
+				_id: user._id,
+				first_name: user.first_name,
+				last_name: user.last_name,
+			};
+			const token = jwt.sign(payload, process.env.STRATEGY_SECRET, {
+				expiresIn: '30m',
+			});
+			res.cookie('token', token, {
+				httpOnly: true,
+				secure: false,
+				sameSite: 'strict',
+			});
+			const data = { ...user._doc };
+			delete data.password;
+			return res.status(200).json(data);
+		})(req, res, next);
+	} catch (error) {
+		next(error);
+	}
+};
 
 exports.sign_up_user = [
 	body('first_name', 'First name format is incorrect')
 		.trim()
-		.isLength({ min: 4, max: 32 })
+		.isLength({ min: 2, max: 32 })
 		.escape(),
 	body('last_name', 'Last name format is incorrect')
 		.trim()
-		.isLength({ min: 4, max: 32 })
+		.isLength({ min: 2, max: 32 })
 		.escape(),
 	body('email', 'Email format is incorrect')
 		.trim()
@@ -58,7 +127,7 @@ exports.sign_up_user = [
 	},
 ];
 
-exports.log_in_user = [
+exports.log_in_user_with_email = [
 	body('email', 'Email format is incorrect').trim().isEmail().escape(),
 	body('password', 'Password format is incorrect')
 		.trim()
