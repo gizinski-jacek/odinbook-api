@@ -7,24 +7,15 @@ const logger = require('morgan');
 const cors = require('cors');
 const helmet = require('helmet');
 const compression = require('compression');
-const mongoose = require('mongoose');
+require('./mongo/mongoConfig');
 require('./passport/passport');
-
-const mongoDb = process.env.MONGODB_URI;
-mongoose.connect(mongoDb, { useNewUrlParser: true, useUnifiedTopology: true });
-const db = mongoose.connection;
-db.on('error', console.error.bind(console, 'MongoDB connection error:'));
 
 const indexRouter = require('./routes/index');
 const apiRouter = require('./routes/api');
 
 const app = express();
 app.use(cors({ origin: process.env.CLIENT_URI }));
-app.use(
-	helmet({
-		crossOriginResourcePolicy: false,
-	})
-);
+app.use(helmet({ crossOriginResourcePolicy: false }));
 app.use(logger('dev'));
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
