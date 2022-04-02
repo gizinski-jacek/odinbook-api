@@ -5,6 +5,8 @@ const JWTStrategy = require('passport-jwt').Strategy;
 const FacebookStrategy = require('passport-facebook').Strategy;
 const bcryptjs = require('bcryptjs');
 const User = require('../models/user');
+const fs = require('fs');
+const axios = require('axios');
 
 passport.use(
 	'login',
@@ -32,6 +34,18 @@ passport.use(
 	)
 );
 
+const downloadFBProfilePicture = async (url, file_name) => {
+	try {
+		const response = await axios({ url, responseType: 'stream' });
+		await response.data.pipe(
+			fs.createWriteStream('public/photos/users/' + file_name)
+		);
+		return file_name;
+	} catch (error) {
+		next(error);
+	}
+};
+
 passport.use(
 	'facebook',
 	new FacebookStrategy(
@@ -39,7 +53,7 @@ passport.use(
 			clientID: process.env.FACEBOOK_APP_ID,
 			clientSecret: process.env.FACEBOOK_SECRET,
 			callbackURL: 'http://localhost:4000/api/log-in/facebook/callback',
-			profileFields: ['id', 'email', 'displayName'],
+			profileFields: ['id', 'email', 'displayName', 'picture.type(large)'],
 		},
 		async (accessToken, refreshToken, profile, done) => {
 			try {
@@ -51,11 +65,18 @@ passport.use(
 						email: profile.emails[0].value,
 					}).exec();
 					if (!emailUsed) {
+						const picture_name =
+							Date.now() + '__' + 'fb_pic_' + profile.id + '.jpg';
+						await downloadFBProfilePicture(
+							profile.photos[0].value,
+							picture_name
+						);
 						const newUser = new User({
 							facebookId: profile.id,
 							first_name: profile.displayName.split(' ')[0],
 							last_name: profile.displayName.split(' ')[1],
 							email: profile.emails[0].value,
+							profile_picture: picture_name,
 						});
 						const randomString = Math.random().toString(36).substring(2, 10);
 						const hashedPassword = await bcryptjs.hash(randomString, 10);
