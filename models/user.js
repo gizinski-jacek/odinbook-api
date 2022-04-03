@@ -28,6 +28,7 @@ const UserSchema = new Schema(
 		incoming_friend_requests: [{ type: Schema.Types.ObjectId, ref: 'User' }],
 		outgoing_friend_requests: [{ type: Schema.Types.ObjectId, ref: 'User' }],
 		profile_picture: { type: String, maxlength: 128, default: '' },
+		profile_picture_url: { type: String, maxlength: 256, default: '' },
 		bio: { type: String, maxlength: 512 },
 	},
 	{ timestamps: true }
