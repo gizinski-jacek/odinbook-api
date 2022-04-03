@@ -46,15 +46,7 @@ router.get('/log-out', user_controller.log_out_user);
 router.get('/verify-token', user_controller.verify_user_token);
 
 /////
-router.use(
-	passport.authenticate('jwt', { session: false }),
-	(req, res, next) => {
-		if (req.isAuthenticated()) {
-			return next();
-		}
-		res.redirect('/');
-	}
-);
+router.use(passport.authenticate('jwt', { session: false }));
 
 /////
 // Get current user's contacts
@@ -109,7 +101,7 @@ router.put('/users', (req, res, next) => {
 router.put('/users', user_controller.update_user_data);
 
 // Delete user's picture
-router.delete('/users/picture/:pictureId', user_controller.delete_user_picture);
+router.delete('/users/picture/:pictureid', user_controller.delete_user_picture);
 
 /////
 // Get current user's timeline posts
@@ -144,6 +136,12 @@ router.put('/posts/:postid', (req, res, next) => {
 
 // Update a post
 router.put('/posts/:postid', post_controller.update_post);
+
+// Delete post's picture
+router.delete(
+	'/posts/:postid/picture/:pictureid',
+	post_controller.delete_post_picture
+);
 
 // Delete a post
 router.delete('/posts/:postid', post_controller.delete_post);
