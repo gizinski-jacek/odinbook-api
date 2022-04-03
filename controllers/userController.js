@@ -248,7 +248,12 @@ exports.password_change = [
 					.json('New password must be different from old password');
 			}
 			const hashedPassword = await bcryptjs.hash(req.body.password, 10);
-			await User.findByIdAndUpdate(user._id, { password: hashedPassword });
+			const updatedUser = await User.findByIdAndUpdate(user._id, {
+				password: hashedPassword,
+			});
+			if (!updatedUser) {
+				return res.status(404).json('User not found');
+			}
 			return res.status(200).json({ success: true });
 		} catch (error) {
 			next(error);
@@ -262,6 +267,9 @@ exports.get_contacts_list = async (req, res, next) => {
 			.populate('incoming_friend_requests')
 			.populate('friend_list')
 			.exec();
+		if (!user) {
+			return res.status(404).json('User not found');
+		}
 		return res.status(200).json(user);
 	} catch (error) {
 		next(error);
@@ -274,6 +282,9 @@ exports.get_people_list = async (req, res, next) => {
 		const user_list = await User.find({
 			_id: { $nin: [user._id, ...user.friend_list] },
 		}).exec();
+		if (!user) {
+			return res.status(404).json('User not found');
+		}
 		return res.status(200).json(user_list);
 	} catch (error) {
 		next(error);
@@ -286,6 +297,9 @@ exports.change_block_status = async (req, res, next) => {
 			return res.status(404).json('Invalid user Id');
 		}
 		const user = await User.findById(req.user._id).exec();
+		if (!user) {
+			return res.status(404).json('User not found');
+		}
 		if (user.blocked_user_list.includes(req.body.userId)) {
 			const users_data = await Promise.all([
 				User.findByIdAndUpdate(
@@ -299,6 +313,9 @@ exports.change_block_status = async (req, res, next) => {
 					{ new: true }
 				).exec(),
 			]);
+			if (!users_data) {
+				return res.status(404).json('User not found');
+			}
 			return res.status(200).json(users_data);
 		} else {
 			const users_data = await Promise.all([
@@ -327,6 +344,9 @@ exports.change_block_status = async (req, res, next) => {
 					{ new: true }
 				).exec(),
 			]);
+			if (!users_data) {
+				return res.status(404).json('User not found');
+			}
 			return res.status(200).json(users_data);
 		}
 	} catch (error) {
@@ -340,6 +360,9 @@ exports.send_friend_request = async (req, res, next) => {
 			return res.status(404).json('Invalid user Id');
 		}
 		const user = await User.findById(req.body.userId).exec();
+		if (!user) {
+			return res.status(404).json('User not found');
+		}
 		if (user.blocked_user_list.includes(req.user._id)) {
 			return res
 				.status(200)
@@ -357,6 +380,9 @@ exports.send_friend_request = async (req, res, next) => {
 				{ new: true }
 			).exec(),
 		]);
+		if (!users_data) {
+			return res.status(404).json('User not found');
+		}
 		socketEmits.notification_alert(req.body.userId);
 		return res.status(200).json(users_data);
 	} catch (error) {
@@ -390,6 +416,9 @@ exports.accept_friend_request = async (req, res, next) => {
 				.populate('incoming_friend_requests')
 				.exec(),
 		]);
+		if (!users_data) {
+			return res.status(404).json('User not found');
+		}
 		return res.status(200).json(users_data);
 	} catch (error) {
 		next(error);
@@ -426,6 +455,9 @@ exports.cancel_friend_request = async (req, res, next) => {
 				.populate('incoming_friend_requests')
 				.exec(),
 		]);
+		if (!users_data) {
+			return res.status(404).json('User not found');
+		}
 		return res.status(200).json(users_data);
 	} catch (error) {
 		next(error);
@@ -452,6 +484,9 @@ exports.remove_friend = async (req, res, next) => {
 				.populate('friend_list')
 				.exec(),
 		]);
+		if (!users_data) {
+			return res.status(404).json('User not found');
+		}
 		return res.status(200).json(users_data);
 	} catch (error) {
 		next(error);
@@ -502,6 +537,9 @@ exports.get_single_user = async (req, res, next) => {
 			return res.status(404).json('Invalid user Id');
 		}
 		const user = await User.findById(req.params.userid).exec();
+		if (!user) {
+			return res.status(404).json('User not found');
+		}
 		return res.status(200).json(user);
 	} catch (error) {
 		next(error);
@@ -530,10 +568,17 @@ exports.update_user_data = [
 				{
 					bio: req.body.bio,
 					profile_picture: picture_name,
+					profile_picture_url:
+						process.env.API_URI + '/photos/users/' + picture_name,
 				},
 				{ new: true }
 			).exec();
 			if (!user) {
+				if (req.file) {
+					fs.unlink(`public/photos/posts/${req.file.filename}`, (error) => {
+						if (error) throw error;
+					});
+				}
 				return res.status(404).json('Error updating user');
 			}
 			return res.status(200).json(user);
@@ -550,9 +595,12 @@ exports.delete_user_picture = async (req, res, next) => {
 		});
 		const user = await User.findByIdAndUpdate(
 			req.user._id,
-			{ profile_picture: '' },
+			{ profile_picture: '', profile_picture_url: '' },
 			{ new: true }
 		).exec();
+		if (!user) {
+			return res.status(404).json('User not found');
+		}
 		return res.status(200).json(user);
 	} catch (error) {
 		next(error);
