@@ -51,6 +51,9 @@ exports.create_chat_message = [
 				text: req.body.text,
 			});
 			const theMessage = await newMessage.save();
+			if (!theMessage) {
+				return res.status(404).json('Error saving message');
+			}
 			const chatData = await Chat.findByIdAndUpdate(
 				req.body.chat_ref,
 				{ $addToSet: { message_list: theMessage._id } },
@@ -61,6 +64,9 @@ exports.create_chat_message = [
 					populate: { path: 'author' },
 				})
 				.exec();
+			if (!chatData) {
+				return res.status(404).json('Chat not found');
+			}
 			socketEmits.send_message(req.body.recipient, chatData);
 			return res.status(200).json({ success: true });
 		} catch (error) {
