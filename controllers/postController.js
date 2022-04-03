@@ -51,9 +51,15 @@ exports.create_post = [
 				author: req.user._id,
 				text: req.body.text,
 				picture: picture_name,
+				picture_url: process.env.API_URI + '/photos/posts/' + picture_name,
 			});
 			const post = await newPost.save();
 			if (!post) {
+				if (req.file) {
+					fs.unlink(`public/photos/posts/${newPost.picture}`, (error) => {
+						if (error) throw error;
+					});
+				}
 				return res.status(404).json('Error creating post');
 			}
 			const user = await User.findById(req.user._id).exec();
@@ -95,15 +101,23 @@ exports.update_post = [
 				picture_name = req.file.filename;
 			}
 			const thePost = await Post.findById(req.body._id).exec();
+			if (!thePost) {
+				if (req.file) {
+					fs.unlink(`public/photos/posts/${thePost.picture}`, (error) => {
+						if (error) throw error;
+					});
+				}
+				return res.status(404).json('Post not found');
+			}
 			const updatedPost = new Post({
 				_id: thePost._id,
 				author: thePost.author,
 				text: req.body.text,
 				picture: picture_name,
+				picture_url: process.env.API_URI + '/photos/posts/' + picture_name,
 				comments: thePost.comments,
 				likes: thePost.likes,
 			});
-
 			const post = await Post.findByIdAndUpdate(thePost._id, updatedPost, {
 				timestamps: true,
 				new: true,
@@ -116,13 +130,18 @@ exports.update_post = [
 					},
 				})
 				.exec();
-			if (thePost.picture) {
+			if (!post) {
+				if (req.file) {
+					fs.unlink(`public/photos/posts/${updatedPost.picture}`, (error) => {
+						if (error) throw error;
+					});
+				}
+				return res.status(404).json('Post not found');
+			}
+			if (req.file) {
 				fs.unlink(`public/photos/posts/${thePost.picture}`, (error) => {
 					if (error) throw error;
 				});
-			}
-			if (!post) {
-				return res.status(404).json('Post not found');
 			}
 			return res.status(200).json(post);
 		} catch (error) {
@@ -130,6 +149,36 @@ exports.update_post = [
 		}
 	},
 ];
+
+exports.delete_post_picture = async (req, res, next) => {
+	try {
+		if (!mongoose.Types.ObjectId.isValid(req.params.postid)) {
+			return res.status(404).json('Invalid post Id');
+		}
+		fs.unlink(`public/photos/posts/${req.params.pictureid}`, (error) => {
+			if (error) throw error;
+		});
+		const post = await Post.findByIdAndUpdate(
+			req.params.postid,
+			{ picture: '', picture_url: '' },
+			{ timestamps: true, new: true }
+		)
+			.populate('author')
+			.populate({
+				path: 'comments',
+				populate: {
+					path: 'author',
+				},
+			})
+			.exec();
+		if (!post) {
+			return res.status(404).json('Post not found');
+		}
+		return res.status(200).json(post);
+	} catch (error) {
+		next(error);
+	}
+};
 
 exports.delete_post = async (req, res, next) => {
 	try {
@@ -141,9 +190,6 @@ exports.delete_post = async (req, res, next) => {
 			fs.unlink(`public/photos/posts/${post.picture}`, (error) => {
 				if (error) throw error;
 			});
-		}
-		if (!post) {
-			return res.status(404).json('Post not found');
 		}
 		return res.status(200).json({ success: true });
 	} catch (error) {
@@ -174,6 +220,9 @@ exports.change_like_status = async (req, res, next) => {
 					},
 				})
 				.exec();
+			if (!post) {
+				return res.status(404).json('Post not found');
+			}
 			return res.status(200).json(post);
 		} else {
 			const post = await Post.findByIdAndUpdate(
@@ -189,6 +238,9 @@ exports.change_like_status = async (req, res, next) => {
 					},
 				})
 				.exec();
+			if (!post) {
+				return res.status(404).json('Post not found');
+			}
 			return res.status(200).json(post);
 		}
 	} catch (error) {
