@@ -35,6 +35,9 @@ exports.create_comment = [
 				.populate('author')
 				.populate({ path: 'comments', populate: { path: 'author' } })
 				.exec();
+			if (!post) {
+				return res.status(404).json('Post not found');
+			}
 			return res.status(200).json(post);
 		} catch (error) {
 			next(error);
@@ -60,6 +63,9 @@ exports.update_comment = [
 				return res.status(404).json(errors.array());
 			}
 			const theComment = await Comment.findById(req.body._id).exec();
+			if (!theComment) {
+				return res.status(404).json('Comment not found');
+			}
 			const updatedComment = new Comment({
 				_id: theComment._id,
 				author: theComment.author,
@@ -92,12 +98,7 @@ exports.delete_comment = async (req, res, next) => {
 		if (!mongoose.Types.ObjectId.isValid(req.params.commentid)) {
 			return res.status(404).json('Invalid comment Id');
 		}
-		const comment = await Comment.findByIdAndDelete(
-			req.params.commentid
-		).exec();
-		if (!comment) {
-			return res.status(404).json('Comment not found');
-		}
+		await Comment.findByIdAndDelete(req.params.commentid).exec();
 		const comment_list = await Comment.find({
 			post_ref: req.params.postid,
 		})
@@ -119,6 +120,9 @@ exports.change_like_status = async (req, res, next) => {
 			return res.status(404).json('Invalid comment Id');
 		}
 		const theComment = await Comment.findById(req.body.commentId).exec();
+		if (!theComment) {
+			return res.status(404).json('Comment not found');
+		}
 		if (theComment.likes.includes(req.user._id)) {
 			const comment = await Comment.findByIdAndUpdate(
 				req.body.commentId,
