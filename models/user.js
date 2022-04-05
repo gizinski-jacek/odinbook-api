@@ -27,7 +27,7 @@ const UserSchema = new Schema(
 		blocked_by_other_list: [{ type: Schema.Types.ObjectId, ref: 'User' }],
 		incoming_friend_requests: [{ type: Schema.Types.ObjectId, ref: 'User' }],
 		outgoing_friend_requests: [{ type: Schema.Types.ObjectId, ref: 'User' }],
-		profile_picture: { type: String, maxlength: 128, default: '' },
+		profile_picture_name: { type: String, maxlength: 128, default: '' },
 		profile_picture_url: { type: String, maxlength: 256, default: '' },
 		bio: { type: String, maxlength: 512 },
 	},
