@@ -250,7 +250,7 @@ exports.password_change = [
 			const hashedPassword = await bcryptjs.hash(req.body.password, 10);
 			const updatedUser = await User.findByIdAndUpdate(user._id, {
 				password: hashedPassword,
-			});
+			}).exec();
 			if (!updatedUser) {
 				return res.status(404).json('User not found');
 			}
@@ -559,29 +559,45 @@ exports.update_user_data = [
 				}
 				return res.status(404).json(errors.array());
 			}
-			let picture_name;
-			if (req.file) {
-				picture_name = req.file.filename;
-			}
-			const user = await User.findByIdAndUpdate(
-				req.user._id,
-				{
-					bio: req.body.bio,
-					profile_picture: picture_name,
-					profile_picture_url:
-						process.env.API_URI + '/photos/users/' + picture_name,
-				},
-				{ new: true }
-			).exec();
+			const user = await User.findById(req.user._id).exec();
 			if (!user) {
 				if (req.file) {
-					fs.unlink(`public/photos/posts/${req.file.filename}`, (error) => {
+					fs.unlink(`public/photos/users/${req.file.filename}`, (error) => {
+						if (error) throw error;
+					});
+				}
+				return res.status(404).json('User not found');
+			}
+			const updateData = {
+				bio: req.body.bio,
+			};
+			if (req.file) {
+				updateData.profile_picture_name = req.file.filename;
+				updateData.profile_picture_url =
+					process.env.API_URI + '/photos/users/' + req.file.filename;
+			}
+			const updatedUser = await User.findByIdAndUpdate(
+				req.user._id,
+				updateData,
+				{ timestamps: true, new: true }
+			).exec();
+			if (!updatedUser) {
+				if (req.file) {
+					fs.unlink(`public/photos/users/${req.file.filename}`, (error) => {
 						if (error) throw error;
 					});
 				}
 				return res.status(404).json('Error updating user');
 			}
-			return res.status(200).json(user);
+			if (req.file && user.profile_picture_name) {
+				fs.unlink(
+					`public/photos/users/${user.profile_picture_name}`,
+					(error) => {
+						if (error) throw error;
+					}
+				);
+			}
+			return res.status(200).json(updatedUser);
 		} catch (error) {
 			next(error);
 		}
@@ -590,13 +606,13 @@ exports.update_user_data = [
 
 exports.delete_user_picture = async (req, res, next) => {
 	try {
-		fs.unlink(`public/photos/users/${req.params.pictureId}`, (error) => {
+		fs.unlink(`public/photos/users/${req.params.pictureid}`, (error) => {
 			if (error) throw error;
 		});
 		const user = await User.findByIdAndUpdate(
 			req.user._id,
-			{ profile_picture: '', profile_picture_url: '' },
-			{ new: true }
+			{ profile_picture_name: '', profile_picture_url: '' },
+			{ timestamps: true, new: true }
 		).exec();
 		if (!user) {
 			return res.status(404).json('User not found');
