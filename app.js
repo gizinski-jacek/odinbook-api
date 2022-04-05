@@ -14,7 +14,7 @@ const indexRouter = require('./routes/index');
 const apiRouter = require('./routes/api');
 
 const app = express();
-app.use(cors({ origin: process.env.CLIENT_URI }));
+app.use(cors({ origin: process.env.CLIENT_URI, credentials: true }));
 app.use(helmet({ crossOriginResourcePolicy: false }));
 app.use(logger('dev'));
 app.use(express.json());
