@@ -76,7 +76,7 @@ passport.use(
 							first_name: profile.displayName.split(' ')[0],
 							last_name: profile.displayName.split(' ')[1],
 							email: profile.emails[0].value,
-							profile_picture: picture_name,
+							profile_picture_name: picture_name,
 							profile_picture_url:
 								process.env.API_URI + '/photos/users/' + picture_name,
 						});
@@ -90,7 +90,7 @@ passport.use(
 						emailUsed._id,
 						{ facebookId: profile.id },
 						{ new: true }
-					);
+					).exec();
 					return done(null, linkFBToAccount);
 				}
 				return done(null, userExists);
