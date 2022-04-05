@@ -29,25 +29,40 @@ exports.test_user = async (req, res, next) => {
 		}
 		const userCount = await User.find({}).count().exec();
 		for (let i = 0; i < 10; i++) {
-			let random = Math.random();
-			let user = await User.findOne({})
-				.skip(Math.floor(random * userCount))
+			let randomNumber = Math.random();
+			let randomUser = await User.findOne({})
+				.skip(Math.floor(randomNumber * userCount))
 				.exec();
-			if (user._id == savedTestUser._id.toString()) {
+			if (randomUser._id == savedTestUser._id.toString()) {
 				continue;
 			}
-			if (random >= 0.4) {
-				await User.findByIdAndUpdate(savedTestUser._id, {
-					$addToSet: { friend_list: user._id },
-				}).exec();
-			} else if (random <= 0.1) {
-				await User.findByIdAndUpdate(user._id, {
-					$addToSet: { blocked_by_other_list: user._id },
-				}).exec();
+			if (randomNumber >= 0.4) {
+				await Promise.all([
+					User.findByIdAndUpdate(savedTestUser._id, {
+						$addToSet: { friend_list: randomUser._id },
+					}).exec(),
+					User.findByIdAndUpdate(randomUser._id, {
+						$addToSet: { friend_list: savedTestUser._id },
+					}).exec(),
+				]);
+			} else if (randomNumber <= 0.1) {
+				await Promise.all([
+					User.findByIdAndUpdate(savedTestUser._id, {
+						$addToSet: { blocked_by_other_list: randomUser._id },
+					}).exec(),
+					User.findByIdAndUpdate(randomUser._id, {
+						$addToSet: { blocked_user_list: savedTestUser._id },
+					}).exec(),
+				]);
 			} else {
-				await User.findByIdAndUpdate(savedTestUser._id, {
-					$addToSet: { incoming_friend_requests: user._id },
-				}).exec();
+				await Promise.all([
+					User.findByIdAndUpdate(savedTestUser._id, {
+						$addToSet: { incoming_friend_requests: randomUser._id },
+					}).exec(),
+					User.findByIdAndUpdate(randomUser._id, {
+						$addToSet: { outgoing_friend_requests: savedTestUser._id },
+					}).exec(),
+				]);
 			}
 		}
 		passport.authenticate('login', { session: false }, (error, user, msg) => {
