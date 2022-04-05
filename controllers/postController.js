@@ -43,20 +43,19 @@ exports.create_post = [
 				}
 				return res.status(404).json(errors.array());
 			}
-			let picture_name;
-			if (req.file) {
-				picture_name = req.file.filename;
-			}
 			const newPost = new Post({
 				author: req.user._id,
 				text: req.body.text,
-				picture: picture_name,
-				picture_url: process.env.API_URI + '/photos/posts/' + picture_name,
 			});
+			if (req.file) {
+				newPost.picture_name = req.file.filename;
+				newPost.picture_url =
+					process.env.API_URI + '/photos/posts/' + req.file.filename;
+			}
 			const post = await newPost.save();
 			if (!post) {
 				if (req.file) {
-					fs.unlink(`public/photos/posts/${newPost.picture}`, (error) => {
+					fs.unlink(`public/photos/posts/${newPost.picture_name}`, (error) => {
 						if (error) throw error;
 					});
 				}
@@ -96,29 +95,28 @@ exports.update_post = [
 				}
 				return res.status(404).json(errors.array());
 			}
-			let picture_name;
-			if (req.file) {
-				picture_name = req.file.filename;
-			}
-			const thePost = await Post.findById(req.body._id).exec();
-			if (!thePost) {
+			const post = await Post.findById(req.body._id).exec();
+			if (!post) {
 				if (req.file) {
-					fs.unlink(`public/photos/posts/${thePost.picture}`, (error) => {
+					fs.unlink(`public/photos/posts/${req.file.filename}`, (error) => {
 						if (error) throw error;
 					});
 				}
 				return res.status(404).json('Post not found');
 			}
-			const updatedPost = new Post({
-				_id: thePost._id,
-				author: thePost.author,
+			const updateData = new Post({
+				_id: post._id,
+				author: post.author,
 				text: req.body.text,
-				picture: picture_name,
-				picture_url: process.env.API_URI + '/photos/posts/' + picture_name,
-				comments: thePost.comments,
-				likes: thePost.likes,
+				comments: post.comments,
+				likes: post.likes,
 			});
-			const post = await Post.findByIdAndUpdate(thePost._id, updatedPost, {
+			if (req.file) {
+				updateData.picture_name = req.file.filename;
+				updateData.picture_url =
+					process.env.API_URI + '/photos/posts/' + req.file.filename;
+			}
+			const updatedPost = await Post.findByIdAndUpdate(post._id, updateData, {
 				timestamps: true,
 				new: true,
 			})
@@ -130,20 +128,23 @@ exports.update_post = [
 					},
 				})
 				.exec();
-			if (!post) {
+			if (!updatedPost) {
 				if (req.file) {
-					fs.unlink(`public/photos/posts/${updatedPost.picture}`, (error) => {
-						if (error) throw error;
-					});
+					fs.unlink(
+						`public/photos/posts/${updateData.picture_name}`,
+						(error) => {
+							if (error) throw error;
+						}
+					);
 				}
 				return res.status(404).json('Post not found');
 			}
-			if (req.file) {
-				fs.unlink(`public/photos/posts/${thePost.picture}`, (error) => {
+			if (req.file && post.picture_name) {
+				fs.unlink(`public/photos/posts/${post.picture_name}`, (error) => {
 					if (error) throw error;
 				});
 			}
-			return res.status(200).json(post);
+			return res.status(200).json(updatedPost);
 		} catch (error) {
 			next(error);
 		}
@@ -160,7 +161,7 @@ exports.delete_post_picture = async (req, res, next) => {
 		});
 		const post = await Post.findByIdAndUpdate(
 			req.params.postid,
-			{ picture: '', picture_url: '' },
+			{ picture_name: '', picture_url: '' },
 			{ timestamps: true, new: true }
 		)
 			.populate('author')
