@@ -15,6 +15,7 @@ exports.get_chat_data = async (req, res, next) => {
 		const chatExists = await Chat.findOne({
 			participants: participantList,
 		})
+			.populate('participants')
 			.populate({
 				path: 'message_list',
 				populate: { path: 'author' },
@@ -59,6 +60,7 @@ exports.create_chat_message = [
 				{ $addToSet: { message_list: theMessage._id } },
 				{ new: true }
 			)
+				.populate('participants')
 				.populate({
 					path: 'message_list',
 					populate: { path: 'author' },
