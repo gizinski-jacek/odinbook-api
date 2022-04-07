@@ -8,10 +8,10 @@ const { socketEmits } = require('../socketio/socketio');
 
 exports.get_chat_data = async (req, res, next) => {
 	try {
-		if (!mongoose.Types.ObjectId.isValid(req.query.friendId)) {
+		if (!mongoose.Types.ObjectId.isValid(req.params.friendid)) {
 			return res.status(404).json('Invalid user Id');
 		}
-		const participantList = [req.user._id, req.query.friendId].sort();
+		const participantList = [req.user._id, req.params.friendid].sort();
 		const chatExists = await Chat.findOne({
 			participants: participantList,
 		})

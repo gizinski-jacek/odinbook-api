@@ -104,7 +104,7 @@ router.put('/users', user_controller.update_user_data);
 router.delete('/users/picture/:pictureid', user_controller.delete_user_picture);
 
 /////
-// Get current user's timeline posts
+// Get user's timeline posts
 router.get('/posts/timeline', post_controller.get_timeline_posts);
 
 // Handle picture multer errors on post creation
@@ -173,7 +173,7 @@ router.put(
 
 /////
 // Get chat data
-router.get('/chats', message_controller.get_chat_data);
+router.get('/chats/:friendid', message_controller.get_chat_data);
 
 // Create chat message
 router.post('/chats/messages', message_controller.create_chat_message);
