@@ -69,7 +69,10 @@ exports.create_chat_message = [
 			if (!chatData) {
 				return res.status(404).json('Chat not found');
 			}
-			socketEmits.send_message(req.body.recipient, chatData);
+			const recipient = chatData.participants.find(
+				(u) => u._id != req.user._id
+			);
+			socketEmits.send_message(recipient._id, chatData);
 			return res.status(200).json({ success: true });
 		} catch (error) {
 			next(error);
