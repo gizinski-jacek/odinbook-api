@@ -237,7 +237,7 @@ exports.verify_user_token = async (req, res, next) => {
 			const user = await User.findById(decodedToken._id).exec();
 			return res.status(200).json(user);
 		}
-		return res.status(200).json(null);
+		return res.status(401).json('Failed to verify user token');
 	} catch (error) {
 		res.clearCookie('token', { path: '/' });
 		return res.status(401).json('Failed to verify user token');

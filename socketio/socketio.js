@@ -88,13 +88,13 @@ chats.on('connection', (socket) => {
 		});
 	}
 
-	socket.on('subscribe_chat', async (recipientId) => {
+	socket.on('subscribe_chat', async (friendId) => {
 		try {
-			if (!mongoose.Types.ObjectId.isValid(recipientId)) {
+			if (!mongoose.Types.ObjectId.isValid(friendId)) {
 				socket.emit('oops', 'Chat error');
 				return;
 			}
-			const participantList = [socket.handshake.user._id, recipientId].sort();
+			const participantList = [socket.handshake.user._id, friendId].sort();
 			const chatExists = await Chat.findOne({
 				participants: participantList,
 			}).exec();
@@ -129,13 +129,13 @@ const socketEmits = {
 				.emit('notification_alert');
 		}
 	},
-	send_message: (recipientId, chatData) => {
+	send_message: (friendId, chatData) => {
 		const chatClient = chats_clients.find(
-			(client) => client.userId == recipientId
+			(client) => client.userId == friendId.toString()
 		);
 		if (!chatClient) {
 			const notificationsClient = notifications_clients.find(
-				(client) => client.userId == recipientId
+				(client) => client.userId == friendId.toString()
 			);
 			if (notificationsClient) {
 				notifications.to(notificationsClient.socket.id).emit('message_alert');
