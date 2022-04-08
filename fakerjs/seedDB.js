@@ -1,8 +1,5 @@
 #! /usr/bin / env node
 
-// This script populates some test categories and items to your database.
-// Specified database as argument - e.g.: seedDB mongodb + srv://cooluser:coolpassword@cluster0.a9azn.mongodb.net/local_library?retryWrites=true&w=majority
-
 // const mongoose = require('mongoose');
 // const mongoDb = process.env.MONGODB_URI;
 // mongoose.connect(mongoDb, { useNewUrlParser: true, useUnifiedTopology: true });
