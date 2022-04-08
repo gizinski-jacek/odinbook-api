@@ -133,15 +133,14 @@ const socketEmits = {
 		const chatClient = chats_clients.find(
 			(client) => client.userId == friendId.toString()
 		);
-		if (!chatClient) {
-			const notificationsClient = notifications_clients.find(
-				(client) => client.userId == friendId.toString()
-			);
-			if (notificationsClient) {
-				notifications.to(notificationsClient.socket.id).emit('message_alert');
-			}
-		} else {
+		const notificationsClient = notifications_clients.find(
+			(client) => client.userId == friendId.toString()
+		);
+		if (chatClient) {
 			chats.to(chatClient.socket.id).emit('receive_message', chatData);
+		}
+		if (notificationsClient) {
+			notifications.to(notificationsClient.socket.id).emit('message_alert');
 		}
 		chats.to(chatData._id.toString()).emit('receive_message', chatData);
 	},
