@@ -9,9 +9,14 @@ const post_controller = require('../controllers/postController');
 const comment_controller = require('../controllers/commentController');
 const message_controller = require('../controllers/messageController');
 
-// Redirect to all posts.
+//
 router.get('/', (req, res, next) => {
-	res.redirect('/posts');
+	res.send(
+		`<h2>Odinbook API</h2>
+		<p><a href=https://github.com/gizinski-jacek/odinbook-api>API Github Repository</a></p>
+		<p><a href=https://github.com/gizinski-jacek/odinbook-client>Client Github Repository</a></p>`
+	);
+	return res.end();
 });
 
 /////
