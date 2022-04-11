@@ -14,6 +14,16 @@ const indexRouter = require('./routes/index');
 const apiRouter = require('./routes/api');
 
 const app = express();
+app.use(function (req, res, next) {
+	res.header('Access-Control-Allow-Origin', process.env.CLIENT_URI);
+	res.header('Access-Control-Allow-Methods', 'GET, PUT, POST, DELETE');
+	res.header(
+		'Access-Control-Allow-Headers',
+		'Content-Type, Authorization, Content-Length, X-Requested-With, X-Api-Key'
+	);
+	res.header('Access-Control-Allow-Credentials', 'true');
+	next();
+});
 app.use(cors({ origin: process.env.CLIENT_URI, credentials: true }));
 app.use(helmet({ crossOriginResourcePolicy: false }));
 app.use(logger('dev'));
