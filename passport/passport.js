@@ -78,7 +78,7 @@ passport.use(
 							email: profile.emails[0].value,
 							profile_picture_name: picture_name,
 							profile_picture_url:
-								process.env.API_URI + 'photos/users/' + picture_name,
+								process.env.API_URI + '/photos/users/' + picture_name,
 						});
 						const randomString = Math.random().toString(36).substring(2, 10);
 						const hashedPassword = await bcryptjs.hash(randomString, 10);
