@@ -82,8 +82,8 @@ exports.test_user = async (req, res, next) => {
 			});
 			res.cookie('token', token, {
 				httpOnly: true,
-				secure: false,
-				sameSite: 'strict',
+				secure: true,
+				SameSite: 'none',
 			});
 			const data = { ...user._doc };
 			delete data.password;
@@ -174,8 +174,8 @@ exports.log_in_user_with_email = [
 					});
 					res.cookie('token', token, {
 						httpOnly: true,
-						secure: false,
-						sameSite: 'strict',
+						secure: true,
+						SameSite: 'none',
 					});
 					const data = { ...user._doc };
 					delete data.password;
@@ -211,8 +211,8 @@ exports.log_in_facebook_user_callback = async (req, res, next) => {
 				});
 				res.cookie('token', token, {
 					httpOnly: true,
-					secure: false,
-					sameSite: 'strict',
+					secure: true,
+					SameSite: 'none',
 				});
 				return res.redirect(process.env.CLIENT_URI);
 			} catch (error) {
