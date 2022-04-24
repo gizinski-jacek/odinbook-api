@@ -2,7 +2,7 @@
 
 Backend API for a small Facebook clone.
 
-For the frontend client go [here](https://github.com/gizinski-jacek/odinbook-client)
+For the frontend client go [here](https://github.com/gizinski-jacek/odinbook-client).
 
 ## Table of contents
 
@@ -15,9 +15,9 @@ For the frontend client go [here](https://github.com/gizinski-jacek/odinbook-cli
 
 # Github & Live
 
-Github repo can be found [here](https://github.com/gizinski-jacek/odinbook-api)
+Github repo can be found [here](https://github.com/gizinski-jacek/odinbook-api).
 
-This repo is live on [Heroku](https://odinbook-api-48463.herokuapp.com)
+This repo is live on [Heroku](https://odinbook-api-48463.herokuapp.com).
 
 ## Getting Started
 
@@ -33,7 +33,7 @@ In the project root directory run the app with:
 npm run devstart
 ```
 
-Open [http://localhost:4000](http://localhost:4000) to view API in the browser.
+Open [http://localhost:4000](http://localhost:4000) to view it in the browser.
 
 ## Deploy
 
@@ -50,7 +50,7 @@ heroku open
 
 You cannot deploy both Frontend and Backend to Heroku because [Heroku is included in Suffix List](https://devcenter.heroku.com/articles/cookies-and-herokuapp-com), which prevents an app on heroku domain from setting cookies on other heroku apps.\
 You can either use [Custom Domain](https://devcenter.heroku.com/articles/custom-domains) or deploy either app to other hosting service like [Netlify](https://docs.netlify.com/cli/get-started).\
-[I recommend deploying Frontend client of this app to Netlify](https://github.com/gizinski-jacek/odinbook-client#deploy).
+I recommend deploying [Frontend client](https://github.com/gizinski-jacek/odinbook-client#deploy) of this app to Netlify.
 
 ## Features
 
