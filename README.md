@@ -2,7 +2,7 @@
 
 Backend API for a small Facebook clone.
 
-For the frontend client go [here](https://github.com/gizinski-jacek/odinbook-client).
+For the Frontend client go [here](https://github.com/gizinski-jacek/odinbook-client).
 
 ## Table of contents
 
