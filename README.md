@@ -17,7 +17,7 @@ For the Frontend client go [here](https://github.com/gizinski-jacek/odinbook-cli
 
 Github repo can be found [here](https://github.com/gizinski-jacek/odinbook-api).
 
-This repo is live on [Heroku](https://odinbook-api-48463.herokuapp.com).
+Live demo can be found on [Heroku](https://odinbook-api-48463.herokuapp.com).
 
 ## Getting Started
 
