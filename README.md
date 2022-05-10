@@ -43,6 +43,7 @@ Script for running app build after deployment to Heroku is included in package.j
 In the project root directory run these commands:
 
 ```bash
+curl https://cli-assets.heroku.com/install-ubuntu.sh | sh
 heroku create
 git push heroku main
 heroku open
