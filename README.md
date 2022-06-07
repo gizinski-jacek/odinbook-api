@@ -76,5 +76,5 @@ Project status: **_FINISHED_**
 Feel free to contact me at:
 
 ```
-jacektrg@gmail.com
+gizinski.jacek.tr@gmail.com
 ```
