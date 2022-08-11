@@ -114,7 +114,7 @@ passport.use(
 	new JWTStrategy(
 		{
 			jwtFromRequest: extractToken,
-			secretOrKey: process.env.STRATEGY_SECRET,
+			secretOrKey: process.env.JWT_STRATEGY_SECRET,
 		},
 		(jwtPayload, done) => {
 			try {

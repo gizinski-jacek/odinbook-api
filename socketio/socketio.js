@@ -24,7 +24,7 @@ io._nsps.forEach((ionamespace) => {
 		passportJwtSocket.authorize(
 			{
 				jwtFromRequest: extractToken,
-				secretOrKey: process.env.STRATEGY_SECRET,
+				secretOrKey: process.env.JWT_STRATEGY_SECRET,
 			},
 			async (jwtPayload, done) => {
 				try {

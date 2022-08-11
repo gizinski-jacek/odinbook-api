@@ -77,7 +77,7 @@ exports.test_user = async (req, res, next) => {
 				first_name: user.first_name,
 				last_name: user.last_name,
 			};
-			const token = jwt.sign(payload, process.env.STRATEGY_SECRET, {
+			const token = jwt.sign(payload, process.env.JWT_STRATEGY_SECRET, {
 				expiresIn: '30m',
 			});
 			res.cookie('token', token, {
@@ -171,7 +171,7 @@ exports.log_in_user_with_email = [
 						first_name: user.first_name,
 						last_name: user.last_name,
 					};
-					const token = jwt.sign(payload, process.env.STRATEGY_SECRET, {
+					const token = jwt.sign(payload, process.env.JWT_STRATEGY_SECRET, {
 						expiresIn: '30m',
 					});
 					res.cookie('token', token, {
@@ -210,7 +210,7 @@ exports.log_in_facebook_user_callback = async (req, res, next) => {
 					first_name: user.first_name,
 					last_name: user.last_name,
 				};
-				const token = jwt.sign(payload, process.env.STRATEGY_SECRET, {
+				const token = jwt.sign(payload, process.env.JWT_STRATEGY_SECRET, {
 					expiresIn: '30m',
 				});
 				res.cookie('token', token, {
@@ -236,7 +236,7 @@ exports.verify_user_token = async (req, res, next) => {
 		if (req.cookies.token) {
 			const decodedToken = jwt.verify(
 				req.cookies.token,
-				process.env.STRATEGY_SECRET
+				process.env.JWT_STRATEGY_SECRET
 			);
 			const user = await User.findById(decodedToken._id).exec();
 			const data = { ...user._doc };
