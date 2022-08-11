@@ -87,6 +87,8 @@ exports.test_user = async (req, res, next) => {
 			});
 			const data = { ...user._doc };
 			delete data.password;
+			delete data.createdAt;
+			delete data.updatedAt;
 			return res.status(200).json(data);
 		})(req, res, next);
 	} catch (error) {
@@ -179,6 +181,8 @@ exports.log_in_user_with_email = [
 					});
 					const data = { ...user._doc };
 					delete data.password;
+					delete data.createdAt;
+					delete data.updatedAt;
 					return res.status(200).json(data);
 				} catch (error) {
 					next(error);
@@ -235,7 +239,11 @@ exports.verify_user_token = async (req, res, next) => {
 				process.env.STRATEGY_SECRET
 			);
 			const user = await User.findById(decodedToken._id).exec();
-			return res.status(200).json(user);
+			const data = { ...user._doc };
+			delete data.password;
+			delete data.createdAt;
+			delete data.updatedAt;
+			return res.status(200).json(data);
 		}
 		return res.status(200).json(null);
 	} catch (error) {
