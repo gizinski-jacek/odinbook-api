@@ -17,7 +17,7 @@ For the Frontend client go [here](https://github.com/gizinski-jacek/odinbook-cli
 
 Github repo can be found [here](https://github.com/gizinski-jacek/odinbook-api).
 
-Live demo can be found on [Heroku](https://odinbook-api-48463.herokuapp.com).
+Live demo can be found on [Render](https://odinbook-api-jkch.onrender.com).
 
 ## Getting Started
 
@@ -53,7 +53,15 @@ You cannot deploy both Frontend and Backend to Heroku because [Heroku is include
 You can either use [Custom Domain](https://devcenter.heroku.com/articles/custom-domains) or deploy either app to other hosting service like [Netlify](https://docs.netlify.com/cli/get-started).\
 I recommend deploying [Frontend client](https://github.com/gizinski-jacek/odinbook-client#deploy) of this app to Netlify.
 
-Don't forget to add **.env** file with environmental variables for the app:
+Don't forget to add **.env** file with these environmental variables for the app:
+```
+MONGODB_URI
+JWT_STRATEGY_SECRET
+FACEBOOK_SECRET
+FACEBOOK_APP_ID
+CLIENT_URI
+API_URI
+```
 
 ## Features
 
