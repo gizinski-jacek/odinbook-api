@@ -6,12 +6,14 @@ For the Frontend client go [here](https://github.com/gizinski-jacek/odinbook-cli
 
 ## Table of contents
 
-- [Github & Live](#github--live)
-- [Getting Started](#getting-started)
-- [Deploy](#deploy)
-- [Features](#features)
-- [Status](#status)
-- [Contact](#contact)
+- [Odinbook (API)](#odinbook-api)
+  - [Table of contents](#table-of-contents)
+- [Github \& Live](#github--live)
+  - [Getting Started](#getting-started)
+  - [Deploy](#deploy)
+  - [Features](#features)
+  - [Status](#status)
+  - [Contact](#contact)
 
 # Github & Live
 
@@ -50,10 +52,11 @@ heroku open
 ```
 
 You cannot deploy both Frontend and Backend to Heroku because [Heroku is included in Suffix List](https://devcenter.heroku.com/articles/cookies-and-herokuapp-com), which prevents an app on heroku domain from setting cookies on other heroku apps.\
-You can either use [Custom Domain](https://devcenter.heroku.com/articles/custom-domains) or deploy either app to different hosting service like [Netlify](https://docs.netlify.com/cli/get-started).\
+You can either use [Custom Domain](https://devcenter.heroku.com/articles/custom-domains) or deploy either app to other hosting service like [Netlify](https://docs.netlify.com/cli/get-started).\
 I recommend deploying [Frontend client](https://github.com/gizinski-jacek/odinbook-client#deploy) of this app to Netlify.
 
-Don't forget to add **.env** file with these environmental variables for the app:
+Don't forget to add **.env** file with these environment variables for the app:
+
 ```
 MONGODB_URI
 JWT_STRATEGY_SECRET
