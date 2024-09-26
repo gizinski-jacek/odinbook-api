@@ -1,6 +1,6 @@
 # Odinbook (API)
 
-Backend API for a small Facebook clone.
+API for a Facebook clone app.
 
 For the Frontend client go [here](https://github.com/gizinski-jacek/odinbook-client).
 
