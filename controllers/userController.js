@@ -226,7 +226,11 @@ exports.log_in_facebook_user_callback = async (req, res, next) => {
 };
 
 exports.log_out_user = (req, res, next) => {
-	res.clearCookie('token', { path: '/' });
+	// res.clearCookie('token', { path: '/' });
+	res.setHeader(
+		'Set-Cookie',
+		'token=""; expires=Thu, 01 Jan 1970 00:00:00 GMT; HttpOnly; SameSite=None; Secure; Path=/; Partitioned;'
+	);
 	return res.status(200).json({ success: true });
 };
 
