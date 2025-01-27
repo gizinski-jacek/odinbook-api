@@ -80,11 +80,10 @@ exports.test_user = async (req, res, next) => {
 			const token = jwt.sign(payload, process.env.JWT_STRATEGY_SECRET, {
 				expiresIn: '30m',
 			});
-			res.cookie('token', token, {
-				httpOnly: true,
-				secure: true,
-				SameSite: 'none',
-			});
+			res.setHeader(
+				'Set-Cookie',
+				`token=${token}; HttpOnly; SameSite=None; Secure; Path=/; Partitioned;`
+			);
 			const data = { ...user._doc };
 			delete data.password;
 			delete data.createdAt;
