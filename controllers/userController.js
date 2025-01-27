@@ -80,6 +80,11 @@ exports.test_user = async (req, res, next) => {
 			const token = jwt.sign(payload, process.env.JWT_STRATEGY_SECRET, {
 				expiresIn: '30m',
 			});
+			// res.cookie('token', token, {
+			// 	httpOnly: true,
+			// 	secure: true,
+			// 	SameSite: 'none',
+			// });
 			res.setHeader(
 				'Set-Cookie',
 				`token=${token}; HttpOnly; SameSite=None; Secure; Path=/; Partitioned;`
@@ -173,11 +178,15 @@ exports.log_in_user_with_email = [
 					const token = jwt.sign(payload, process.env.JWT_STRATEGY_SECRET, {
 						expiresIn: '30m',
 					});
-					res.cookie('token', token, {
-						httpOnly: true,
-						secure: true,
-						SameSite: 'none',
-					});
+					// res.cookie('token', token, {
+					// 	httpOnly: true,
+					// 	secure: true,
+					// 	SameSite: 'none',
+					// });
+					res.setHeader(
+						'Set-Cookie',
+						`token=${token}; HttpOnly; SameSite=None; Secure; Path=/; Partitioned;`
+					);
 					const data = { ...user._doc };
 					delete data.password;
 					delete data.createdAt;
@@ -212,11 +221,15 @@ exports.log_in_facebook_user_callback = async (req, res, next) => {
 				const token = jwt.sign(payload, process.env.JWT_STRATEGY_SECRET, {
 					expiresIn: '30m',
 				});
-				res.cookie('token', token, {
-					httpOnly: true,
-					secure: true,
-					SameSite: 'none',
-				});
+				// res.cookie('token', token, {
+				// 	httpOnly: true,
+				// 	secure: true,
+				// 	SameSite: 'none',
+				// });
+				res.setHeader(
+					'Set-Cookie',
+					`token=${token}; HttpOnly; SameSite=None; Secure; Path=/; Partitioned;`
+				);
 				return res.redirect(process.env.CLIENT_URI);
 			} catch (error) {
 				next(error);
@@ -250,7 +263,11 @@ exports.verify_user_token = async (req, res, next) => {
 		}
 		return res.status(200).json(null);
 	} catch (error) {
-		res.clearCookie('token', { path: '/' });
+		// res.clearCookie('token', { path: '/' });
+		res.setHeader(
+			'Set-Cookie',
+			'token=""; expires=Thu, 01 Jan 1970 00:00:00 GMT; HttpOnly; SameSite=None; Secure; Path=/; Partitioned;'
+		);
 		return res.status(401).json('Failed to verify user token');
 	}
 };
